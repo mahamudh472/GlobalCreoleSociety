@@ -2,7 +2,11 @@
 Permission helpers for social media functionality
 """
 from django.db.models import Q
-from .models import SocietyMembership, UserBlock, Friendship
+from django.contrib.auth import get_user_model
+from .models import SocietyMembership, UserBlock
+from accounts.models import Friendship
+
+User = get_user_model()
 
 
 class SocietyPermissions:
@@ -191,7 +195,7 @@ def get_visible_posts_queryset(user):
     Get queryset of posts visible to a user
     Includes both personal posts and society posts
     """
-    from .models import Post, User
+    from .models import Post
     
     # Get friends
     friends = User.objects.filter(
@@ -247,7 +251,7 @@ def get_society_posts_queryset(user, society):
     """
     Get posts from a specific society that user can view
     """
-    from .models import Post, User
+    from .models import Post
     
     # Check if user can view the society
     if not SocietyPermissions.can_view_society(user, society):
@@ -273,7 +277,7 @@ def get_user_profile_posts_queryset(viewer, profile_user):
     """
     Get posts from a user's profile (excluding society posts)
     """
-    from .models import Post, User
+    from .models import Post
     
     # Check if viewer is blocked
     if UserBlock.objects.filter(blocker=profile_user, blocked=viewer).exists():

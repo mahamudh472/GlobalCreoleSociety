@@ -1,4 +1,7 @@
 asgiref==3.10.0
+channels==4.3.2
+channels-redis==4.3.0
+daphne==4.2.1
 Django==5.2.8
 django-cleanup==9.0.0
 django-cors-headers==4.9.0
@@ -7,4 +10,5 @@ djangorestframework_simplejwt==5.5.1
 pillow==12.0.0
 PyJWT==2.10.1
 python-dotenv==1.2.1
+redis==7.1.0
 sqlparse==0.5.3

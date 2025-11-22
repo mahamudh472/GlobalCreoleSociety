@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 5px 5px 0;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        button.success {
+            background: #28a745;
+        }
+        button.success:hover {
+            background: #218838;
+        }
+        .messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+        .message {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            background: white;
+            border-left: 3px solid #007bff;
+        }
+        .message.own {
+            border-left-color: #28a745;
+            background: #f0f8f0;
+        }
+        .message .sender {
+            font-weight: bold;
+            color: #007bff;
+            margin-right: 5px;
+        }
+        .message .time {
+            font-size: 0.8em;
+            color: #999;
+            float: right;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            border-radius: 4px 4px 0 0;
+            background: #f5f5f5;
+        }
+        .tab.active {
+            background: white;
+            border-bottom: none;
+            font-weight: bold;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 GlobalCreoleSociety Chat App - Test Interface</h1>
+    
+    <!-- Authentication Section -->
+    <div class="container">
+        <h2>🔑 Authentication</h2>
+        <div class="input-group">
+            <label>JWT Access Token:</label>
+            <input type="text" id="token" placeholder="Paste your JWT access token here">
+            <small>Get token from: POST /api/accounts/login/</small>
+        </div>
+        <button onclick="saveToken()">Save Token</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('rest')">REST API</div>
+        <div class="tab" onclick="switchTab('private')">Private Chat (WebSocket)</div>
+        <div class="tab" onclick="switchTab('global')">Global Chat (WebSocket)</div>
+    </div>
+
+    <!-- REST API Tab -->
+    <div id="rest" class="tab-content active">
+        <div class="container">
+            <h2>📋 Conversation Management</h2>
+            
+            <div class="input-group">
+                <label>Other User ID (UUID):</label>
+                <input type="text" id="otherUserId" placeholder="Enter user UUID to start conversation">
+            </div>
+            <button onclick="createConversation()">Create/Get Conversation</button>
+            <button onclick="listConversations()">List All Conversations</button>
+            <button onclick="listUnreadConversations()">List Unread Only</button>
+            <button onclick="getUnreadCount()">Get Total Unread Count</button>
+            
+            <div class="input-group" style="margin-top: 20px;">
+                <label>Conversation ID:</label>
+                <input type="text" id="conversationId" placeholder="Paste conversation UUID">
+            </div>
+            <button onclick="getMessages()">Get Messages</button>
+            <button onclick="markAsRead()">Mark as Read</button>
+            <button class="danger" onclick="deleteConversation()">Delete Conversation</button>
+            
+            <h3>Send Message</h3>
+            <div class="input-group">
+                <label>Message Content:</label>
+                <textarea id="messageContent" rows="3" placeholder="Type your message..."></textarea>
+            </div>
+            <button class="success" onclick="sendMessage()">Send Message</button>
+        </div>
+
+        <div class="container">
+            <h2>🌍 Global Chat (REST)</h2>
+            <button onclick="getGlobalMessages()">Load Global Messages</button>
+            
+            <div class="input-group">
+                <label>Message:</label>
+                <textarea id="globalMessageContent" rows="3" placeholder="Type message for global chat..."></textarea>
+            </div>
+            <button class="success" onclick="sendGlobalMessage()">Send to Global Chat</button>
+        </div>
+
+        <div class="container">
+            <h3>Response:</h3>
+            <div class="messages" id="restResponse">
+                <em>API responses will appear here...</em>
+            </div>
+        </div>
+    </div>
+
+    <!-- Private Chat WebSocket Tab -->
+    <div id="private" class="tab-content">
+        <div class="container">
+            <h2>💬 Private Chat (WebSocket)</h2>
+            
+            <div id="privateStatus" class="status disconnected">
+                Status: Disconnected
+            </div>
+            
+            <div class="input-group">
+                <label>Conversation ID:</label>
+                <input type="text" id="wsConversationId" placeholder="Enter conversation UUID">
+            </div>
+            <button class="success" onclick="connectPrivateChat()">Connect</button>
+            <button class="danger" onclick="disconnectPrivateChat()">Disconnect</button>
+            
+            <div class="messages" id="privateMessages">
+                <em>Messages will appear here...</em>
+            </div>
+            
+            <div class="input-group">
+                <label>Message:</label>
+                <textarea id="privateMessageInput" rows="2" placeholder="Type your message..." onkeyup="handleTyping(event, 'private')"></textarea>
+            </div>
+            <button class="success" onclick="sendPrivateMessage()">Send Message</button>
+        </div>
+    </div>
+
+    <!-- Global Chat WebSocket Tab -->
+    <div id="global" class="tab-content">
+        <div class="container">
+            <h2>🌎 Global Chat (WebSocket)</h2>
+            
+            <div id="globalStatus" class="status disconnected">
+                Status: Disconnected
+            </div>
+            
+            <button class="success" onclick="connectGlobalChat()">Connect</button>
+            <button class="danger" onclick="disconnectGlobalChat()">Disconnect</button>
+            
+            <div class="messages" id="globalMessages">
+                <em>Messages will appear here...</em>
+            </div>
+            
+            <div class="input-group">
+                <label>Message:</label>
+                <textarea id="globalMessageInput" rows="2" placeholder="Type your message..." onkeyup="handleTyping(event, 'global')"></textarea>
+            </div>
+            <button class="success" onclick="sendGlobalChatMessage()">Send Message</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/chat';
+        const WS_BASE = 'ws://localhost:8000/ws';
+        
+        let token = '';
+        let privateSocket = null;
+        let globalSocket = null;
+        let typingTimeout = null;
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // Save token
+        function saveToken() {
+            token = document.getElementById('token').value.trim();
+            if (token) {
+                alert('Token saved successfully!');
+            } else {
+                alert('Please enter a valid token');
+            }
+        }
+
+        // API Helper
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            if (!token) {
+                alert('Please save your JWT token first!');
+                return;
+            }
+
+            const options = {
+                method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, options);
+                const data = await response.json();
+                displayResponse(data);
+                return data;
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        // Display Response
+        function displayResponse(data) {
+            const container = document.getElementById('restResponse');
+            container.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        // REST API Functions
+        async function createConversation() {
+            const userId = document.getElementById('otherUserId').value.trim();
+            if (!userId) {
+                alert('Please enter user ID');
+                return;
+            }
+            await apiCall('/conversations/', 'POST', { user_id: userId });
+        }
+
+        async function listConversations() {
+            await apiCall('/conversations/');
+        }
+
+        async function listUnreadConversations() {
+            await apiCall('/conversations/?unread_only=true');
+        }
+
+        async function getUnreadCount() {
+            await apiCall('/conversations/unread_count/');
+        }
+
+        async function getMessages() {
+            const convId = document.getElementById('conversationId').value.trim();
+            if (!convId) {
+                alert('Please enter conversation ID');
+                return;
+            }
+            await apiCall(`/conversations/${convId}/messages/`);
+        }
+
+        async function sendMessage() {
+            const convId = document.getElementById('conversationId').value.trim();
+            const content = document.getElementById('messageContent').value.trim();
+            
+            if (!convId || !content) {
+                alert('Please enter conversation ID and message content');
+                return;
+            }
+            
+            await apiCall(`/conversations/${convId}/send_message/`, 'POST', { content });
+            document.getElementById('messageContent').value = '';
+        }
+
+        async function markAsRead() {
+            const convId = document.getElementById('conversationId').value.trim();
+            if (!convId) {
+                alert('Please enter conversation ID');
+                return;
+            }
+            await apiCall(`/conversations/${convId}/mark_as_read/`, 'POST');
+        }
+
+        async function deleteConversation() {
+            const convId = document.getElementById('conversationId').value.trim();
+            if (!convId) {
+                alert('Please enter conversation ID');
+                return;
+            }
+            if (confirm('Are you sure you want to delete this conversation?')) {
+                await apiCall(`/conversations/${convId}/`, 'DELETE');
+            }
+        }
+
+        async function getGlobalMessages() {
+            await apiCall('/global-chat/');
+        }
+
+        async function sendGlobalMessage() {
+            const content = document.getElementById('globalMessageContent').value.trim();
+            if (!content) {
+                alert('Please enter message content');
+                return;
+            }
+            await apiCall('/global-chat/send_message/', 'POST', { content });
+            document.getElementById('globalMessageContent').value = '';
+        }
+
+        // WebSocket Functions - Private Chat
+        function connectPrivateChat() {
+            if (!token) {
+                alert('Please save your JWT token first!');
+                return;
+            }
+
+            const convId = document.getElementById('wsConversationId').value.trim();
+            if (!convId) {
+                alert('Please enter conversation ID');
+                return;
+            }
+
+            privateSocket = new WebSocket(`${WS_BASE}/chat/${convId}/?token=${token}`);
+
+            privateSocket.onopen = () => {
+                updateStatus('private', true);
+                addMessage('private', 'System', 'Connected to private chat', true);
+            };
+
+            privateSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handlePrivateMessage(data);
+            };
+
+            privateSocket.onerror = (error) => {
+                addMessage('private', 'Error', error.message, true);
+            };
+
+            privateSocket.onclose = () => {
+                updateStatus('private', false);
+                addMessage('private', 'System', 'Disconnected from chat', true);
+            };
+        }
+
+        function disconnectPrivateChat() {
+            if (privateSocket) {
+                privateSocket.close();
+                privateSocket = null;
+            }
+        }
+
+        function sendPrivateMessage() {
+            if (!privateSocket || privateSocket.readyState !== WebSocket.OPEN) {
+                alert('Not connected to chat!');
+                return;
+            }
+
+            const content = document.getElementById('privateMessageInput').value.trim();
+            if (!content) return;
+
+            privateSocket.send(JSON.stringify({
+                type: 'chat_message',
+                content: content
+            }));
+
+            document.getElementById('privateMessageInput').value = '';
+        }
+
+        function handlePrivateMessage(data) {
+            switch (data.type) {
+                case 'connection_established':
+                    addMessage('private', 'System', data.message, true);
+                    break;
+                case 'chat_message':
+                    const msg = data.message;
+                    addMessage('private', msg.sender.profile_name, msg.content);
+                    break;
+                case 'message_read':
+                    addMessage('private', 'System', `Message ${data.message_id} was read`, true);
+                    break;
+                case 'typing_indicator':
+                    // Handle typing indicator
+                    break;
+            }
+        }
+
+        // WebSocket Functions - Global Chat
+        function connectGlobalChat() {
+            if (!token) {
+                alert('Please save your JWT token first!');
+                return;
+            }
+
+            globalSocket = new WebSocket(`${WS_BASE}/global-chat/?token=${token}`);
+
+            globalSocket.onopen = () => {
+                updateStatus('global', true);
+                addMessage('global', 'System', 'Connected to global chat', true);
+            };
+
+            globalSocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleGlobalMessage(data);
+            };
+
+            globalSocket.onerror = (error) => {
+                addMessage('global', 'Error', error.message, true);
+            };
+
+            globalSocket.onclose = () => {
+                updateStatus('global', false);
+                addMessage('global', 'System', 'Disconnected from global chat', true);
+            };
+        }
+
+        function disconnectGlobalChat() {
+            if (globalSocket) {
+                globalSocket.close();
+                globalSocket = null;
+            }
+        }
+
+        function sendGlobalChatMessage() {
+            if (!globalSocket || globalSocket.readyState !== WebSocket.OPEN) {
+                alert('Not connected to global chat!');
+                return;
+            }
+
+            const content = document.getElementById('globalMessageInput').value.trim();
+            if (!content) return;
+
+            globalSocket.send(JSON.stringify({
+                type: 'chat_message',
+                content: content
+            }));
+
+            document.getElementById('globalMessageInput').value = '';
+        }
+
+        function handleGlobalMessage(data) {
+            switch (data.type) {
+                case 'connection_established':
+                    addMessage('global', 'System', data.message, true);
+                    break;
+                case 'chat_message':
+                    const msg = data.message;
+                    addMessage('global', msg.sender.profile_name, msg.content);
+                    break;
+                case 'user_joined':
+                    addMessage('global', 'System', `${data.username} joined the chat`, true);
+                    break;
+                case 'user_left':
+                    addMessage('global', 'System', `${data.username} left the chat`, true);
+                    break;
+                case 'typing_indicator':
+                    // Handle typing indicator
+                    break;
+            }
+        }
+
+        // Helper Functions
+        function updateStatus(type, connected) {
+            const statusEl = document.getElementById(`${type}Status`);
+            if (connected) {
+                statusEl.className = 'status connected';
+                statusEl.textContent = 'Status: Connected ✓';
+            } else {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = 'Status: Disconnected ✗';
+            }
+        }
+
+        function addMessage(type, sender, content, isSystem = false) {
+            const container = document.getElementById(`${type}Messages`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message' + (isSystem ? '' : ' own');
+            
+            const time = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <span class="sender">${sender}:</span>
+                <span class="time">${time}</span>
+                <div>${content}</div>
+            `;
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleTyping(event, type) {
+            // Send typing indicator on keypress
+            const socket = type === 'private' ? privateSocket : globalSocket;
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+            clearTimeout(typingTimeout);
+            
+            socket.send(JSON.stringify({
+                type: 'typing',
+                is_typing: true
+            }));
+
+            typingTimeout = setTimeout(() => {
+                socket.send(JSON.stringify({
+                    type: 'typing',
+                    is_typing: false
+                }));
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
