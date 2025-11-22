@@ -206,6 +206,208 @@ Mark All as Read:
 
 ---
 
+## Chat & Messaging
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| GET | `/chat/conversations/` | List all user's conversations | Yes |
+| POST | `/chat/conversations/` | Create/get conversation with a user | Yes |
+| GET | `/chat/conversations/{id}/` | Get conversation details | Yes |
+| DELETE | `/chat/conversations/{id}/` | Delete a conversation | Yes |
+| GET | `/chat/conversations/{id}/messages/` | Get messages in conversation | Yes |
+| POST | `/chat/conversations/{id}/send_message/` | Send message in conversation | Yes |
+| POST | `/chat/conversations/{id}/mark_as_read/` | Mark conversation messages as read | Yes |
+| GET | `/chat/conversations/unread_count/` | Get total unread message count | Yes |
+| GET | `/chat/messages/` | List user's messages | Yes |
+| GET | `/chat/messages/{id}/` | Get specific message | Yes |
+| POST | `/chat/messages/{id}/mark_read/` | Mark a message as read | Yes |
+| GET | `/chat/global-chat/` | List global chat messages | Yes |
+| POST | `/chat/global-chat/send_message/` | Send global chat message | Yes |
+
+**Request Body Examples:**
+
+Create/Get Conversation:
+```json
+{
+  "user_id": "uuid"
+}
+```
+
+Send Message in Conversation (multipart/form-data):
+```
+content: "Hello there!"
+file: image.jpg  // optional
+file_type: "image"  // optional: "image", "video", "document"
+```
+
+Send Global Chat Message (multipart/form-data):
+```
+content: "Hello everyone!"
+file: image.jpg  // optional
+file_type: "image"  // optional
+```
+
+**Query Parameters:**
+
+List Conversations:
+```
+?unread_only=true  // Filter to show only conversations with unread messages
+```
+
+**WebSocket Endpoints:**
+
+Real-time chat functionality is available through WebSocket connections:
+
+- Private Chat: `ws://localhost:8000/ws/chat/{conversation_id}/`
+- Global Chat: `ws://localhost:8000/ws/global-chat/`
+
+WebSocket Message Format (Send):
+```json
+{
+  "type": "chat_message",
+  "content": "Hello!",
+  "file_type": "image",  // optional
+  "file_url": "/media/..."  // optional
+}
+```
+
+WebSocket Message Format (Receive):
+```json
+{
+  "type": "chat_message",
+  "message": {
+    "id": "uuid",
+    "sender": {
+      "id": "uuid",
+      "username": "user123",
+      "profile_picture": "..."
+    },
+    "content": "Hello!",
+    "file": "...",
+    "file_type": "image",
+    "created_at": "2025-11-23T...",
+    "is_read": false
+  }
+}
+```
+
+---
+
+## Shop Management
+
+| Method | Endpoint | Description | Auth Required | Admin Only |
+|--------|----------|-------------|---------------|------------|
+| GET | `/shop/categories/` | List all categories | Yes | No |
+| POST | `/shop/categories/` | Create a category | Yes | Yes |
+| GET | `/shop/categories/{id}/` | Get category details | Yes | No |
+| PUT/PATCH | `/shop/categories/{id}/` | Update a category | Yes | Yes |
+| DELETE | `/shop/categories/{id}/` | Delete a category | Yes | Yes |
+| GET | `/shop/products/` | List products (filtered by status) | Yes | No |
+| POST | `/shop/products/` | Create a product (pending status) | Yes | No |
+| GET | `/shop/products/{id}/` | Get product details | Yes | No |
+| PUT/PATCH | `/shop/products/{id}/` | Update a product | Yes | Owner |
+| DELETE | `/shop/products/{id}/` | Delete a product | Yes | Owner/Admin |
+| GET | `/shop/products/my-products/` | List current user's products | Yes | No |
+| GET | `/shop/products/pending/` | List pending products | Yes | Yes |
+| POST | `/shop/products/{id}/approve/` | Approve a product | Yes | Yes |
+| POST | `/shop/products/{id}/reject/` | Reject a product | Yes | Yes |
+| POST | `/shop/products/{id}/add-image/` | Add image to product | Yes | Owner |
+| DELETE | `/shop/products/{id}/delete-image/{image_id}/` | Delete product image | Yes | Owner |
+| GET | `/shop/cart/` | Get user's cart | Yes | No |
+| POST | `/shop/cart/add-item/` | Add item to cart | Yes | No |
+| PATCH | `/shop/cart/update-item/{item_id}/` | Update cart item quantity | Yes | No |
+| DELETE | `/shop/cart/remove-item/{item_id}/` | Remove item from cart | Yes | No |
+| DELETE | `/shop/cart/clear/` | Clear all cart items | Yes | No |
+| GET | `/shop/orders/` | List orders | Yes | No |
+| GET | `/shop/orders/{id}/` | Get order details | Yes | Owner/Admin |
+| POST | `/shop/orders/checkout/` | Checkout from cart | Yes | No |
+| POST | `/shop/orders/buy-now/` | Buy single item directly | Yes | No |
+| PATCH | `/shop/orders/{id}/update-status/` | Update order status | Yes | Yes |
+
+**Request Body Examples:**
+
+Create Category:
+```json
+{
+  "name": "Electronics",
+  "description": "Electronic devices and accessories"
+}
+```
+
+Create Product (multipart/form-data):
+```
+name: "Smartphone X"
+description: "Latest smartphone"
+category: 1
+price: 599.99
+stock: 50
+uploaded_images[]: image1.jpg
+uploaded_images[]: image2.jpg
+```
+
+Approve Product:
+```
+POST /shop/products/{id}/approve/
+(No body required)
+```
+
+Reject Product:
+```json
+{
+  "rejection_reason": "Images are not clear"
+}
+```
+
+Add Item to Cart:
+```json
+{
+  "product_id": 1,
+  "quantity": 2
+}
+```
+
+Update Cart Item:
+```json
+{
+  "quantity": 3
+}
+```
+
+Checkout from Cart:
+```json
+{
+  "cart_item_ids": [1, 2],
+  "shipping_address": "123 Main St",
+  "shipping_city": "New York",
+  "shipping_postal_code": "10001",
+  "shipping_country": "USA",
+  "shipping_phone": "+1234567890",
+  "notes": "Deliver between 9-5 PM"
+}
+```
+
+Buy Now:
+```json
+{
+  "product_id": 1,
+  "quantity": 1,
+  "shipping_address": "123 Main St",
+  "shipping_city": "New York",
+  "shipping_postal_code": "10001",
+  "shipping_country": "USA",
+  "shipping_phone": "+1234567890"
+}
+```
+
+Update Order Status:
+```json
+{
+  "status": "shipped"
+}
+```
+
+---
+
 ## Endpoint Statistics
 
 ### By Category
@@ -217,15 +419,17 @@ Mark All as Read:
 - **Stories**: 4 endpoints
 - **Notifications**: 2 endpoints
 - **User Blocking**: 2 endpoints
+- **Chat & Messaging**: 13 endpoints (+ 2 WebSocket endpoints)
+- **Shop Management**: 26 endpoints
 
-### Total: 50 endpoints
+### Total: 89 REST endpoints + 2 WebSocket endpoints
 
 ### By HTTP Method
-- **GET**: 15 endpoints (read operations)
-- **POST**: 20 endpoints (create/action operations)
+- **GET**: 30 endpoints (read operations)
+- **POST**: 35 endpoints (create/action operations)
 - **PUT**: 4 endpoints (full update operations)
-- **PATCH**: 4 endpoints (partial update operations)
-- **DELETE**: 7 endpoints (delete operations)
+- **PATCH**: 6 endpoints (partial update operations)
+- **DELETE**: 14 endpoints (delete operations)
 
 ---
 

@@ -47,10 +47,12 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_cleanup',
     'channels',
+    'django_filters',
 
     'accounts',
     'social',
     'chat',
+    'shop',
 
 ]
 
