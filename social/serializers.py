@@ -116,12 +116,12 @@ class PostSerializer(serializers.ModelSerializer):
     like_count = serializers.IntegerField(read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
     is_liked = serializers.SerializerMethodField()
-    society_name = serializers.CharField(source='society.name', read_only=True)
+    society = serializers.SerializerMethodField()
     
     class Meta:
         model = Post
         fields = [
-            'id', 'user', 'content', 'privacy', 'society', 'society_name',
+            'id', 'user', 'content', 'privacy', 'society',
             'media', 'like_count', 'comment_count', 'is_liked',
             'created_at', 'updated_at'
         ]
@@ -132,6 +132,17 @@ class PostSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return PostLike.objects.filter(user=request.user, post=obj).exists()
         return False
+    
+    def get_society(self, obj):
+        if obj.society:
+            return {
+                'id': obj.society.id,
+                'name': obj.society.name,
+                'cover_image': obj.society.cover_image.url if obj.society.cover_image else None,
+                'cover_picture': obj.society.cover_image.url if obj.society.cover_image else None,
+                'members_count': obj.society.member_count,
+            }
+        return None
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
@@ -195,12 +206,15 @@ class SocietySerializer(serializers.ModelSerializer):
     creator = UserBasicSerializer(read_only=True)
     member_count = serializers.IntegerField(read_only=True)
     user_membership = serializers.SerializerMethodField()
+    is_member = serializers.SerializerMethodField()
+    cover_picture = serializers.ImageField(source='cover_image', read_only=True)
+    members_count = serializers.IntegerField(source='member_count', read_only=True)
     
     class Meta:
         model = Society
         fields = [
-            'id', 'name', 'description', 'cover_image', 'privacy',
-            'creator', 'member_count', 'user_membership',
+            'id', 'name', 'description', 'cover_image', 'cover_picture', 'privacy',
+            'creator', 'member_count', 'members_count', 'user_membership', 'is_member',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'creator', 'created_at', 'updated_at']
@@ -218,6 +232,17 @@ class SocietySerializer(serializers.ModelSerializer):
                     'role': membership.role
                 }
         return None
+    
+    def get_is_member(self, obj):
+        """Check if the current user is a member of this society"""
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return SocietyMembership.objects.filter(
+                user=request.user,
+                society=obj,
+                status='accepted'
+            ).exists()
+        return False
 
 
 class SocietyMembershipSerializer(serializers.ModelSerializer):

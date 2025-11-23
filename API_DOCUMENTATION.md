@@ -302,7 +302,12 @@ Toggles like on a comment.
 ### 1. List Societies
 **GET** `/social/societies/`
 
-Lists public societies or societies the user is a member of.
+Lists societies with optional filtering.
+
+**Query Parameters:**
+- `my_societies=true`: Returns only societies the user is a member of
+- `available=true`: Returns only societies the user is NOT a member of (available to join)
+- No parameters: Returns both user's societies and public societies
 
 **Response:** `200 OK`
 ```json
@@ -312,9 +317,12 @@ Lists public societies or societies the user is a member of.
     "name": "Creole Culture Society",
     "description": "A community for Creole culture enthusiasts",
     "cover_image": "/media/society_covers/image.jpg",
+    "cover_picture": "/media/society_covers/image.jpg",
     "privacy": "public",
     "creator": {...},
     "member_count": 25,
+    "members_count": 25,
+    "is_member": true,
     "user_membership": {
       "status": "accepted",
       "role": "member"

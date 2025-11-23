@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Count
 from django.utils import timezone
 
 from .models import (
@@ -256,9 +256,21 @@ class PostListView(generics.ListAPIView):
     pagination_class = PostPagination
     
     def get_queryset(self):
-        return get_visible_posts_queryset(self.request.user).select_related(
+        queryset = get_visible_posts_queryset(self.request.user).select_related(
             'user', 'society'
         ).prefetch_related('media', 'likes', 'comments').order_by('-created_at')
+        
+        # Optional: Filter by specific user
+        user_id = self.request.query_params.get('user_id', None)
+        if user_id:
+            queryset = queryset.filter(user_id=user_id)
+        
+        # Optional: Exclude society posts (for profile pages)
+        exclude_society = self.request.query_params.get('exclude_society', 'false').lower()
+        if exclude_society == 'true':
+            queryset = queryset.filter(society__isnull=True)
+        
+        return queryset
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -469,20 +481,43 @@ class CommentLikeView(APIView):
 # ============== Society Views ==============
 
 class SocietyListView(generics.ListAPIView):
-    """List all societies (public) or user's societies"""
+    """List societies with optional filtering
+    
+    Query Parameters:
+    - my_societies=true: Returns only societies user is a member of
+    - available=true: Returns only societies user is NOT a member of (available to join)
+    - (no params): Returns both user's societies and public societies
+    """
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SocietySerializer
     
     def get_queryset(self):
-        # Get societies user is a member of or public societies
-        user_societies = SocietyMembership.objects.filter(
-            user=self.request.user,
+        user = self.request.user
+        my_societies = self.request.query_params.get('my_societies', None)
+        available = self.request.query_params.get('available', None)
+        
+        # Get societies user is a member of
+        user_society_ids = SocietyMembership.objects.filter(
+            user=user,
             status='accepted'
         ).values_list('society_id', flat=True)
         
-        return Society.objects.filter(
-            Q(id__in=user_societies) | Q(privacy='public')
-        ).select_related('creator').distinct()
+        # Filter based on query parameters
+        if my_societies == 'true':
+            # Return only societies user is a member of
+            return Society.objects.filter(
+                id__in=user_society_ids
+            ).select_related('creator').prefetch_related('memberships').distinct()
+        elif available == 'true':
+            # Return only societies user is NOT a member of (available to join)
+            return Society.objects.filter(
+                Q(privacy='public') & ~Q(id__in=user_society_ids)
+            ).select_related('creator').prefetch_related('memberships').distinct()
+        else:
+            # Default: Return both user's societies and public societies
+            return Society.objects.filter(
+                Q(id__in=user_society_ids) | Q(privacy='public')
+            ).select_related('creator').prefetch_related('memberships').distinct()
 
 
 class SocietyCreateView(generics.CreateAPIView):
