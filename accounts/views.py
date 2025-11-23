@@ -75,6 +75,28 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+
+class OtherUserProfileView(generics.RetrieveAPIView):
+    """View any user's profile by user ID"""
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+    queryset = User.objects.all()
+    lookup_field = 'id'
+
+    def retrieve(self, request, *args, **kwargs):
+        user = self.get_object()
+        
+        # Check if profile is locked
+        if user.profile_lock and user != request.user:
+            return Response(
+                {"detail": "This profile is private."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(user, context={'request': request})
+        return Response(serializer.data)
+
+
 class ChangePasswordView(generics.UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     model = User

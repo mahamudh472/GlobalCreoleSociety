@@ -3,9 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Count, Max, Prefetch
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import os
+import magic
+import uuid
 
 from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt
 from .serializers import (
@@ -15,6 +21,77 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+# ============== Custom Pagination Classes ==============
+
+class MessagePagination(PageNumberPagination):
+    """Pagination for private chat messages"""
+    page_size = 30  # Load 30 messages at a time
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class GlobalChatPagination(PageNumberPagination):
+    """Pagination for global chat messages"""
+    page_size = 10  # Load only last 10 messages initially
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+# Allowed file types for upload (MIME types)
+ALLOWED_FILE_TYPES = {
+    # Images
+    'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    # Videos
+    'video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm',
+    # Audio
+    'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/webm',
+    # Documents
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'text/plain',
+    'application/zip',
+    'application/x-rar-compressed',
+}
+
+# Maximum file size: 10MB
+MAX_FILE_SIZE = 10 * 1024 * 1024
+
+
+def validate_file(file):
+    """
+    Validate uploaded file for type and size
+    """
+    # Check file size
+    if file.size > MAX_FILE_SIZE:
+        raise ValueError(f'File size exceeds maximum allowed size of {MAX_FILE_SIZE / (1024 * 1024)}MB')
+    
+    # Check MIME type using python-magic
+    file_mime = magic.from_buffer(file.read(2048), mime=True)
+    file.seek(0)  # Reset file pointer
+    
+    if file_mime not in ALLOWED_FILE_TYPES:
+        raise ValueError(f'File type {file_mime} is not allowed. Allowed types: images, videos, audio, documents')
+    
+    return True
+
+
+def convert_uuids_to_strings(data):
+    """
+    Recursively convert all UUID objects to strings in a dictionary or list
+    """
+    if isinstance(data, dict):
+        return {key: convert_uuids_to_strings(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_uuids_to_strings(item) for item in data]
+    elif isinstance(data, uuid.UUID):
+        return str(data)
+    else:
+        return data
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -102,7 +179,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def messages(self, request, pk=None):
         """
-        Get messages for a specific conversation
+        Get messages for a specific conversation with pagination
+        Messages are returned in reverse chronological order (newest first) for infinite scroll
         """
         conversation = self.get_object()
         
@@ -113,13 +191,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
+        # Order by created_at descending (newest first) for reverse infinite scroll
         messages = conversation.messages.select_related('sender').order_by('-created_at')
         
         # Pagination
-        page = self.paginate_queryset(messages)
+        paginator = MessagePagination()
+        page = paginator.paginate_queryset(messages, request)
         if page is not None:
             serializer = MessageSerializer(page, many=True, context={'request': request})
-            return self.get_paginated_response(serializer.data)
+            # Reverse the results so oldest is first in each page
+            data = list(reversed(serializer.data))
+            return paginator.get_paginated_response(data)
         
         serializer = MessageSerializer(messages, many=True, context={'request': request})
         return Response(serializer.data)
@@ -148,6 +230,16 @@ class ConversationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Validate file if present
+        if file:
+            try:
+                validate_file(file)
+            except ValueError as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
         message = Message.objects.create(
             conversation=conversation,
             sender=request.user,
@@ -161,7 +253,35 @@ class ConversationViewSet(viewsets.ModelViewSet):
         conversation.save()
         
         serializer = MessageSerializer(message, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        message_data = convert_uuids_to_strings(serializer.data)
+        
+        # Broadcast message to WebSocket group for real-time delivery
+        channel_layer = get_channel_layer()
+        conversation_group_name = f'chat_{conversation.id}'
+        
+        async_to_sync(channel_layer.group_send)(
+            conversation_group_name,
+            {
+                'type': 'chat_message',
+                'message': message_data
+            }
+        )
+        
+        # Notify all participants about conversation update
+        participants = conversation.participants.all()
+        for participant in participants:
+            async_to_sync(channel_layer.group_send)(
+                f'user_{participant.id}',
+                {
+                    'type': 'conversation_update',
+                    'conversation_id': str(conversation.id),
+                    'last_message': content or '[File]',
+                    'timestamp': message.created_at.isoformat(),
+                    'sender_id': str(request.user.id),
+                }
+            )
+        
+        return Response(message_data, status=status.HTTP_201_CREATED)
     
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):
@@ -202,6 +322,58 @@ class ConversationViewSet(viewsets.ModelViewSet):
         ).exclude(sender=user).count()
         
         return Response({'unread_count': total_unread})
+    
+    @action(detail=False, methods=['get'])
+    def search_friends(self, request):
+        """
+        Search for friends (with or without existing conversations)
+        Useful for starting new conversations
+        """
+        query = request.query_params.get('q', '').strip()
+        
+        # Get user's friends
+        from accounts.models import Friendship
+        friend_ids = Friendship.objects.filter(
+            Q(requester=request.user) | Q(receiver=request.user),
+            status='accepted'
+        ).values_list('requester_id', 'receiver_id')
+        
+        # Flatten and filter out current user
+        all_friend_ids = set()
+        for req_id, rec_id in friend_ids:
+            if req_id != request.user.id:
+                all_friend_ids.add(req_id)
+            if rec_id != request.user.id:
+                all_friend_ids.add(rec_id)
+        
+        # Get friends
+        friends = User.objects.filter(id__in=all_friend_ids)
+        
+        # Filter by search query if provided
+        if query:
+            friends = friends.filter(
+                Q(profile_name__icontains=query) | Q(email__icontains=query)
+            )
+        
+        # For each friend, check if conversation exists
+        result = []
+        for friend in friends:
+            conversation = Conversation.objects.filter(
+                participants=request.user
+            ).filter(
+                participants=friend
+            ).first()
+            
+            result.append({
+                'id': friend.id,
+                'profile_name': friend.profile_name,
+                'email': friend.email,
+                'profile_image': request.build_absolute_uri(friend.profile_image.url) if friend.profile_image else None,
+                'has_conversation': conversation is not None,
+                'conversation_id': str(conversation.id) if conversation else None
+            })
+        
+        return Response(result)
     
     def destroy(self, request, *args, **kwargs):
         """
@@ -269,10 +441,12 @@ class GlobalChatViewSet(viewsets.ReadOnlyModelViewSet):
     """
     permission_classes = [IsAuthenticated]
     serializer_class = GlobalChatMessageSerializer
+    pagination_class = GlobalChatPagination
     
     def get_queryset(self):
         """
-        Get global chat messages
+        Get global chat messages ordered newest to oldest for reverse infinite scroll
+        Frontend will reverse to display oldest first
         """
         return GlobalChatMessage.objects.select_related('sender').order_by('-created_at')
     
@@ -290,6 +464,16 @@ class GlobalChatViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'Message must have content or file'},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        # Validate file if present
+        if file:
+            try:
+                validate_file(file)
+            except ValueError as e:
+                return Response(
+                    {'error': str(e)},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         
         message = GlobalChatMessage.objects.create(
             sender=request.user,

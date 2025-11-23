@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from .models import (
     Post, PostMedia, PostLike, Comment, CommentLike,
     Story, StoryMedia, StoryView,
@@ -15,10 +16,22 @@ User = get_user_model()
 
 class UserBasicSerializer(serializers.ModelSerializer):
     """Basic user info for nested serialization"""
+    profile_image = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = ['id', 'email', 'profile_name', 'profile_image']
         read_only_fields = fields
+    
+    def get_profile_image(self, obj):
+        """Return absolute URL for profile image"""
+        if obj.profile_image and hasattr(obj.profile_image, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.profile_image.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.profile_image.url}"
+        return None
 
 
 # ============== Friendship Serializers ==============
@@ -62,10 +75,22 @@ class FriendRequestSerializer(serializers.Serializer):
 # ============== Post Serializers ==============
 
 class PostMediaSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+    
     class Meta:
         model = PostMedia
         fields = ['id', 'media_type', 'file', 'caption', 'created_at']
         read_only_fields = ['id', 'created_at']
+    
+    def get_file(self, obj):
+        """Return absolute URL for file"""
+        if obj.file and hasattr(obj.file, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.file.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.file.url}"
+        return None
 
 
 class CommentSerializer(serializers.ModelSerializer):

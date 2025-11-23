@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
+from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Location, Work, Education, Friendship, ExtraEmail, ExtraPhoneNumber
 
@@ -67,13 +68,32 @@ class UserSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True, read_only=True)
     works = WorkSerializer(many=True, read_only=True)
     educations = EducationSerializer(many=True, read_only=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True)
+    profile_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'profile_name', 'description', 'profile_image', 
+        fields = ['id', 'email', 'profile_name', 'description', 'profile_image', 'profile_image_url',
                   'website', 'phone_number', 'gender', 'date_of_birth', 'profile_lock',
                   'date_joined', 'locations', 'works', 'educations']
-        read_only_fields = ['id', 'date_joined']
+        read_only_fields = ['id', 'date_joined', 'profile_image_url']
+    
+    def get_profile_image_url(self, obj):
+        """Return absolute URL for profile image"""
+        if obj.profile_image and hasattr(obj.profile_image, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.profile_image.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.profile_image.url}"
+        return None
+    
+    def to_representation(self, instance):
+        """Override to use profile_image_url as profile_image in response"""
+        representation = super().to_representation(instance)
+        # Replace profile_image with the full URL
+        representation['profile_image'] = representation.pop('profile_image_url', None)
+        return representation
 
 
 class ChangePasswordSerializer(serializers.Serializer):

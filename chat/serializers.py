@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.conf import settings
 from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt
 from accounts.serializers import UserSerializer
 
@@ -20,7 +21,8 @@ class MessageSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.file.url)
-            return obj.file.url
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.file.url}"
         return None
 
 
@@ -49,7 +51,7 @@ class ConversationSerializer(serializers.ModelSerializer):
         if request and request.user:
             other_user = obj.get_other_participant(request.user)
             if other_user:
-                return UserSerializer(other_user).data
+                return UserSerializer(other_user, context={'request': request}).data
         return None
 
 
@@ -78,7 +80,7 @@ class ConversationListSerializer(serializers.ModelSerializer):
         if request and request.user:
             other_user = obj.get_other_participant(request.user)
             if other_user:
-                return UserSerializer(other_user).data
+                return UserSerializer(other_user, context={'request': request}).data
         return None
 
 
@@ -99,7 +101,8 @@ class GlobalChatMessageSerializer(serializers.ModelSerializer):
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.file.url)
-            return obj.file.url
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.file.url}"
         return None
 
 

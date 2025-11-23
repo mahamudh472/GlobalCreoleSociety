@@ -29,6 +29,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+# Base URL for absolute URLs (when request context is not available)
+BASE_URL = 'http://127.0.0.1:8000'
+
 
 # Application definition
 
@@ -150,6 +153,9 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# Base URL for absolute URLs (used when request context is not available)
+BASE_URL = 'http://127.0.0.1:8000'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -165,6 +171,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # Default page size
 }
 
 # Simple JWT settings

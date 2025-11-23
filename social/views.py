@@ -1,6 +1,7 @@
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Prefetch
 from django.utils import timezone
@@ -23,6 +24,22 @@ from .permissions import (
     PostPermissions, SocietyPermissions, StoryPermissions,
     get_visible_posts_queryset, get_society_posts_queryset
 )
+
+
+# ============== Custom Pagination Classes ==============
+
+class PostPagination(PageNumberPagination):
+    """Pagination for posts feed"""
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 50
+
+
+class CommentPagination(PageNumberPagination):
+    """Pagination for comments"""
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 # ============== Friend Request Views ==============
@@ -97,6 +114,21 @@ class FriendRequestResponseView(APIView):
                 message=f"{request.user.profile_name} accepted your friend request"
             )
             
+            # Create conversation between the two users
+            from chat.models import Conversation, Message
+            
+            # Check if conversation already exists
+            existing_conversation = Conversation.objects.filter(
+                participants=request.user
+            ).filter(
+                participants=friendship.requester
+            ).first()
+            
+            if not existing_conversation:
+                # Create new conversation (without system message)
+                conversation = Conversation.objects.create()
+                conversation.participants.add(request.user, friendship.requester)
+            
             return Response(
                 FriendshipSerializer(friendship).data,
                 status=status.HTTP_200_OK
@@ -147,6 +179,51 @@ class UnfriendView(APIView):
         )
 
 
+class FriendSuggestionsView(APIView):
+    """Get suggested users to send friend requests to"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        
+        # Get users who are already friends or have pending requests
+        friends_and_pending = Friendship.objects.filter(
+            Q(requester=user) | Q(receiver=user)
+        ).values_list('requester_id', 'receiver_id')
+        
+        # Flatten the list and add current user
+        excluded_user_ids = set()
+        excluded_user_ids.add(user.id)
+        for requester_id, receiver_id in friends_and_pending:
+            excluded_user_ids.add(requester_id)
+            excluded_user_ids.add(receiver_id)
+        
+        # Get users who blocked current user or current user blocked
+        blocked_users = UserBlock.objects.filter(
+            Q(blocker=user) | Q(blocked=user)
+        ).values_list('blocker_id', 'blocked_id')
+        
+        for blocker_id, blocked_id in blocked_users:
+            excluded_user_ids.add(blocker_id)
+            excluded_user_ids.add(blocked_id)
+        
+        # Get suggested users (users not in excluded list)
+        # Priority: mutual friends, then by recent activity
+        suggested_users = User.objects.filter(
+            is_active=True
+        ).exclude(
+            id__in=excluded_user_ids
+        ).exclude(
+            profile_lock=True  # Exclude private profiles
+        ).order_by('-last_login')[:20]  # Limit to 20 suggestions
+        
+        # Serialize user data
+        from accounts.serializers import UserSerializer
+        serializer = UserSerializer(suggested_users, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 # ============== Post Views ==============
 
 class PostCreateView(generics.CreateAPIView):
@@ -156,17 +233,32 @@ class PostCreateView(generics.CreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        # Use the create serializer to validate and create
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        post = serializer.save(user=request.user)
+        
+        # Refresh the post with related data
+        post = Post.objects.select_related('user', 'society').prefetch_related('media', 'likes', 'comments').get(pk=post.pk)
+        
+        # Return the full post data using PostSerializer
+        post_data = PostSerializer(post, context={'request': request}).data
+        headers = self.get_success_headers(post_data)
+        return Response(post_data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class PostListView(generics.ListAPIView):
     """List posts visible to the user (feed)"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
+    pagination_class = PostPagination
     
     def get_queryset(self):
         return get_visible_posts_queryset(self.request.user).select_related(
             'user', 'society'
-        ).prefetch_related('media', 'likes', 'comments')
+        ).prefetch_related('media', 'likes', 'comments').order_by('-created_at')
 
 
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -256,6 +348,7 @@ class PostCommentListView(generics.ListCreateAPIView):
     """List or create comments on a post"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = CommentSerializer
+    pagination_class = CommentPagination
     
     def get_queryset(self):
         post_id = self.kwargs['pk']
@@ -265,7 +358,7 @@ class PostCommentListView(generics.ListCreateAPIView):
         if not PostPermissions.can_view_post(self.request.user, post):
             return Comment.objects.none()
         
-        return Comment.objects.filter(post=post).select_related('user').prefetch_related('likes')
+        return Comment.objects.filter(post=post).select_related('user').prefetch_related('likes').order_by('created_at')
     
     def perform_create(self, serializer):
         post_id = self.kwargs['pk']
