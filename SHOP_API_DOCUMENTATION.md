@@ -220,6 +220,38 @@ List all products created by the current user.
 
 **Response:** `200 OK` (Array of products)
 
+### Get Suggested Products
+Get suggested products based on a product's category (excludes the current product).
+
+**Endpoint:** `GET /api/shop/products/{id}/suggested/`
+
+**Response:** `200 OK`
+```json
+[
+    {
+        "id": 2,
+        "name": "Smartphone Y",
+        "description": "Another great smartphone",
+        "category": 1,
+        "category_name": "Electronics",
+        "price": "549.99",
+        "stock": 30,
+        "status": "approved",
+        "seller": 3,
+        "seller_name": "jane_doe",
+        "primary_image": {
+            "id": 3,
+            "image": "/media/product_images/2025/11/phone2.jpg",
+            "image_url": "http://localhost:8000/media/product_images/2025/11/phone2.jpg",
+            "is_primary": true,
+            "created_at": "2025-11-20T11:00:00Z"
+        },
+        "created_at": "2025-11-20T11:00:00Z"
+    },
+    // ... up to 8 products from the same category
+]
+```
+
 ### Get Pending Products (Admin Only)
 List all products pending approval.
 

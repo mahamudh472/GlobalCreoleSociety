@@ -14,6 +14,7 @@
 | POST | `/accounts/logout/` | Logout (blacklist token) | Yes |
 | GET | `/accounts/profile/` | Get current user profile | Yes |
 | PUT/PATCH | `/accounts/profile/` | Update user profile | Yes |
+| GET | `/accounts/profile/{id}/` | Get other user's profile | Yes |
 | POST | `/accounts/token/refresh/` | Refresh JWT token | No |
 | POST | `/accounts/send-otp/` | Send OTP for verification | Yes |
 | POST | `/accounts/change-password/` | Change password | Yes |
@@ -33,6 +34,107 @@
 | GET | `/social/friends/requests/` | List pending requests received | Yes |
 | POST | `/social/friends/requests/{user_id}/response/` | Accept/reject friend request (user_id=UUID) | Yes |
 | GET | `/social/friends/` | List all friends | Yes |
+| GET | `/social/friends/suggestions/` | Get friend suggestions | Yes |
+| DELETE | `/social/friends/{user_id}/unfriend/` | Remove a friend (user_id=UUID) | Yes |
+
+**Request Body Examples:**
+
+Register:
+```json
+{
+  "email": "user@example.com",
+  "profile_name": "John Doe",
+  "password": "securePassword123",
+  "phone_number": "+1234567890",
+  "gender": "male",
+  "date_of_birth": "1990-01-15",
+  "share_data": false
+}
+```
+
+Login:
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+```
+
+Login/Register Response:
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "profile_name": "John Doe",
+    "description": "",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg",
+    "website": "",
+    "phone_number": "+1234567890",
+    "gender": "male",
+    "date_of_birth": "1990-01-15",
+    "profile_lock": false,
+    "date_joined": "2025-11-23T10:30:00Z",
+    "locations": [],
+    "works": [],
+    "educations": []
+  },
+  "tokens": {
+    "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+    "access": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+  },
+  "message": "Login successful"
+}
+```
+
+Update Profile (PUT/PATCH):
+```json
+{
+  "profile_name": "Updated Name",
+  "description": "My bio here",
+  "website": "https://example.com",
+  "gender": "female"
+}
+```
+
+Change Password:
+```json
+{
+  "old_password": "currentPassword",
+  "new_password": "newSecurePassword",
+  "code": "123456"
+}
+```
+
+Change Email:
+```json
+{
+  "new_email": "newemail@example.com",
+  "password": "currentPassword",
+  "code": "123456"
+}
+```
+
+Add Email:
+```json
+{
+  "email": "extra@example.com",
+  "password": "currentPassword",
+  "code": "123456"
+}
+```
+
+---
+
+## Friend Management
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| POST | `/social/friends/request/` | Send friend request | Yes |
+| GET | `/social/friends/requests/` | List pending requests received | Yes |
+| POST | `/social/friends/requests/{user_id}/response/` | Accept/reject friend request (user_id=UUID) | Yes |
+| GET | `/social/friends/` | List all friends | Yes |
+| GET | `/social/friends/suggestions/` | Get friend suggestions | Yes |
 | DELETE | `/social/friends/{user_id}/unfriend/` | Remove a friend (user_id=UUID) | Yes |
 
 **Request Body Examples:**
@@ -48,6 +150,28 @@ Respond to Friend Request:
 ```json
 {
   "action": "accept"  // or "reject"
+}
+```
+
+Friend Request Response:
+```json
+{
+  "id": "uuid",
+  "requester": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "profile_name": "John Doe",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg"
+  },
+  "receiver": {
+    "id": "uuid",
+    "email": "friend@example.com",
+    "profile_name": "Jane Smith",
+    "profile_image": "http://localhost:8000/media/profile_images/image2.jpg"
+  },
+  "status": "pending",
+  "created_at": "2025-11-23T10:30:00Z",
+  "updated_at": "2025-11-23T10:30:00Z"
 }
 ```
 
@@ -73,11 +197,47 @@ Create Post (multipart/form-data):
 ```
 content: "Post content here"
 privacy: "public"  // or "friends", "private"
-society: "uuid"  // optional
+society: "uuid"  // optional - must be a member to post
 media_files[]: file1.jpg
 media_files[]: file2.jpg
-media_captions[]: "Caption 1"
-media_captions[]: "Caption 2"
+media_captions[]: "Caption for first image"
+media_captions[]: "Caption for second image"
+```
+
+Post Response:
+```json
+{
+  "id": "uuid",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "profile_name": "John Doe",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg"
+  },
+  "content": "Post content here",
+  "privacy": "public",
+  "society": {
+    "id": "uuid",
+    "name": "Society Name",
+    "cover_image": "http://localhost:8000/media/societies/cover.jpg",
+    "cover_picture": "http://localhost:8000/media/societies/cover.jpg",
+    "members_count": 50
+  },
+  "media": [
+    {
+      "id": "uuid",
+      "media_type": "image",
+      "file": "http://localhost:8000/media/post_media/file1.jpg",
+      "caption": "Caption for first image",
+      "created_at": "2025-11-23T10:30:00Z"
+    }
+  ],
+  "like_count": 10,
+  "comment_count": 5,
+  "is_liked": false,
+  "created_at": "2025-11-23T10:30:00Z",
+  "updated_at": "2025-11-23T10:30:00Z"
+}
 ```
 
 Update Post:
@@ -92,6 +252,25 @@ Create Comment:
 ```json
 {
   "content": "Great post!"
+}
+```
+
+Comment Response:
+```json
+{
+  "id": "uuid",
+  "user": {
+    "id": "uuid",
+    "email": "commenter@example.com",
+    "profile_name": "Jane Smith",
+    "profile_image": "http://localhost:8000/media/profile_images/image2.jpg"
+  },
+  "post": "post-uuid",
+  "content": "Great post!",
+  "like_count": 2,
+  "is_liked": false,
+  "created_at": "2025-11-23T10:35:00Z",
+  "updated_at": "2025-11-23T10:35:00Z"
 }
 ```
 
@@ -143,6 +322,33 @@ privacy: "public"  // or "private"
 cover_image: file.jpg  // optional
 ```
 
+Society Response:
+```json
+{
+  "id": "uuid",
+  "name": "Society Name",
+  "description": "Description here",
+  "cover_image": "http://localhost:8000/media/societies/cover.jpg",
+  "cover_picture": "http://localhost:8000/media/societies/cover.jpg",
+  "privacy": "public",
+  "creator": {
+    "id": "uuid",
+    "email": "creator@example.com",
+    "profile_name": "John Doe",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg"
+  },
+  "member_count": 50,
+  "members_count": 50,
+  "user_membership": {
+    "status": "accepted",
+    "role": "admin"
+  },
+  "is_member": true,
+  "created_at": "2025-11-23T10:30:00Z",
+  "updated_at": "2025-11-23T10:30:00Z"
+}
+```
+
 Update Society:
 ```json
 {
@@ -172,6 +378,34 @@ media_files[]: file1.jpg
 media_files[]: file2.mp4
 ```
 
+Story Response:
+```json
+{
+  "id": "uuid",
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "profile_name": "John Doe",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg"
+  },
+  "content": "Story text",
+  "privacy": "public",
+  "media": [
+    {
+      "id": "uuid",
+      "media_type": "image",
+      "file": "http://localhost:8000/media/story_media/file1.jpg",
+      "created_at": "2025-11-23T10:30:00Z"
+    }
+  ],
+  "view_count": 25,
+  "is_viewed": false,
+  "is_active": true,
+  "created_at": "2025-11-23T10:30:00Z",
+  "expires_at": "2025-11-24T10:30:00Z"
+}
+```
+
 ---
 
 ## Notifications
@@ -195,6 +429,28 @@ Mark All as Read:
 {}
 ```
 
+Notification Response:
+```json
+{
+  "id": "uuid",
+  "sender": {
+    "id": "uuid",
+    "email": "friend@example.com",
+    "profile_name": "Jane Smith",
+    "profile_image": "http://localhost:8000/media/profile_images/image2.jpg"
+  },
+  "notification_type": "like",
+  "message": "Jane Smith liked your post",
+  "post": "post-uuid",
+  "post_content": "Original post content...",
+  "comment": null,
+  "society": null,
+  "society_name": null,
+  "is_read": false,
+  "created_at": "2025-11-23T10:30:00Z"
+}
+```
+
 ---
 
 ## User Blocking
@@ -213,15 +469,22 @@ Mark All as Read:
 | GET | `/chat/conversations/` | List all user's conversations | Yes |
 | POST | `/chat/conversations/` | Create/get conversation with a user | Yes |
 | GET | `/chat/conversations/{id}/` | Get conversation details | Yes |
+| PUT | `/chat/conversations/{id}/` | Update a conversation | Yes |
+| PATCH | `/chat/conversations/{id}/` | Partially update a conversation | Yes |
 | DELETE | `/chat/conversations/{id}/` | Delete a conversation | Yes |
-| GET | `/chat/conversations/{id}/messages/` | Get messages in conversation | Yes |
+| GET | `/chat/conversations/{id}/messages/` | Get messages in conversation (paginated) | Yes |
 | POST | `/chat/conversations/{id}/send_message/` | Send message in conversation | Yes |
 | POST | `/chat/conversations/{id}/mark_as_read/` | Mark conversation messages as read | Yes |
 | GET | `/chat/conversations/unread_count/` | Get total unread message count | Yes |
+| GET | `/chat/conversations/search_friends/` | Search friends to start conversations | Yes |
 | GET | `/chat/messages/` | List user's messages | Yes |
 | GET | `/chat/messages/{id}/` | Get specific message | Yes |
+| PUT | `/chat/messages/{id}/` | Update a message | Yes |
+| PATCH | `/chat/messages/{id}/` | Partially update a message | Yes |
+| DELETE | `/chat/messages/{id}/` | Delete a message | Yes |
 | POST | `/chat/messages/{id}/mark_read/` | Mark a message as read | Yes |
-| GET | `/chat/global-chat/` | List global chat messages | Yes |
+| GET | `/chat/global-chat/` | List global chat messages (paginated) | Yes |
+| GET | `/chat/global-chat/{id}/` | Get specific global chat message | Yes |
 | POST | `/chat/global-chat/send_message/` | Send global chat message | Yes |
 
 **Request Body Examples:**
@@ -233,11 +496,98 @@ Create/Get Conversation:
 }
 ```
 
+Conversation List Response:
+```json
+[
+  {
+    "id": "uuid",
+    "other_participant": {
+      "id": "uuid",
+      "email": "friend@example.com",
+      "profile_name": "Jane Smith",
+      "description": "",
+      "profile_image": "http://localhost:8000/media/profile_images/image2.jpg",
+      "website": "",
+      "phone_number": "",
+      "gender": "",
+      "date_of_birth": null,
+      "profile_lock": false,
+      "date_joined": "2025-11-20T10:00:00Z",
+      "locations": [],
+      "works": [],
+      "educations": []
+    },
+    "last_message": {
+      "id": "uuid",
+      "conversation": "conversation-uuid",
+      "sender": {
+        "id": "uuid",
+        "email": "friend@example.com",
+        "profile_name": "Jane Smith",
+        "description": "",
+        "profile_image": "http://localhost:8000/media/profile_images/image2.jpg",
+        "website": "",
+        "phone_number": "",
+        "gender": "",
+        "date_of_birth": null,
+        "profile_lock": false,
+        "date_joined": "2025-11-20T10:00:00Z",
+        "locations": [],
+        "works": [],
+        "educations": []
+      },
+      "content": "Hello there!",
+      "file": null,
+      "file_url": null,
+      "file_type": "",
+      "is_read": false,
+      "read_at": null,
+      "created_at": "2025-11-23T10:30:00Z",
+      "updated_at": "2025-11-23T10:30:00Z"
+    },
+    "unread_count": 3,
+    "updated_at": "2025-11-23T10:30:00Z"
+  }
+]
+```
+
 Send Message in Conversation (multipart/form-data):
 ```
 content: "Hello there!"
 file: image.jpg  // optional
 file_type: "image"  // optional: "image", "video", "document"
+```
+
+Message Response:
+```json
+{
+  "id": "uuid",
+  "conversation": "conversation-uuid",
+  "sender": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "profile_name": "John Doe",
+    "description": "",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg",
+    "website": "",
+    "phone_number": "",
+    "gender": "",
+    "date_of_birth": null,
+    "profile_lock": false,
+    "date_joined": "2025-11-22T10:00:00Z",
+    "locations": [],
+    "works": [],
+    "educations": []
+  },
+  "content": "Hello there!",
+  "file": "http://localhost:8000/media/chat_files/image.jpg",
+  "file_url": "http://localhost:8000/media/chat_files/image.jpg",
+  "file_type": "image",
+  "is_read": false,
+  "read_at": null,
+  "created_at": "2025-11-23T10:35:00Z",
+  "updated_at": "2025-11-23T10:35:00Z"
+}
 ```
 
 Send Global Chat Message (multipart/form-data):
@@ -247,11 +597,45 @@ file: image.jpg  // optional
 file_type: "image"  // optional
 ```
 
+Global Chat Message Response:
+```json
+{
+  "id": "uuid",
+  "sender": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "profile_name": "John Doe",
+    "description": "",
+    "profile_image": "http://localhost:8000/media/profile_images/image.jpg",
+    "website": "",
+    "phone_number": "",
+    "gender": "",
+    "date_of_birth": null,
+    "profile_lock": false,
+    "date_joined": "2025-11-22T10:00:00Z",
+    "locations": [],
+    "works": [],
+    "educations": []
+  },
+  "content": "Hello everyone!",
+  "file": "http://localhost:8000/media/chat_files/image.jpg",
+  "file_url": "http://localhost:8000/media/chat_files/image.jpg",
+  "file_type": "image",
+  "created_at": "2025-11-23T10:35:00Z",
+  "updated_at": "2025-11-23T10:35:00Z"
+}
+```
+
 **Query Parameters:**
 
 List Conversations:
 ```
 ?unread_only=true  // Filter to show only conversations with unread messages
+```
+
+Search Friends:
+```
+?q=search_query  // Search by profile name or email
 ```
 
 **WebSocket Endpoints:**
@@ -300,12 +684,14 @@ WebSocket Message Format (Receive):
 | GET | `/shop/categories/` | List all categories | Yes | No |
 | POST | `/shop/categories/` | Create a category | Yes | Yes |
 | GET | `/shop/categories/{id}/` | Get category details | Yes | No |
-| PUT/PATCH | `/shop/categories/{id}/` | Update a category | Yes | Yes |
+| PUT | `/shop/categories/{id}/` | Update a category (full) | Yes | Yes |
+| PATCH | `/shop/categories/{id}/` | Update a category (partial) | Yes | Yes |
 | DELETE | `/shop/categories/{id}/` | Delete a category | Yes | Yes |
 | GET | `/shop/products/` | List products (filtered by status) | Yes | No |
 | POST | `/shop/products/` | Create a product (pending status) | Yes | No |
 | GET | `/shop/products/{id}/` | Get product details | Yes | No |
-| PUT/PATCH | `/shop/products/{id}/` | Update a product | Yes | Owner |
+| PUT | `/shop/products/{id}/` | Update a product (full) | Yes | Owner |
+| PATCH | `/shop/products/{id}/` | Update a product (partial) | Yes | Owner |
 | DELETE | `/shop/products/{id}/` | Delete a product | Yes | Owner/Admin |
 | GET | `/shop/products/my-products/` | List current user's products | Yes | No |
 | GET | `/shop/products/pending/` | List pending products | Yes | Yes |
@@ -334,15 +720,88 @@ Create Category:
 }
 ```
 
+Category Response:
+```json
+{
+  "id": 1,
+  "name": "Electronics",
+  "description": "Electronic devices and accessories",
+  "product_count": 15,
+  "created_at": "2025-11-23T10:30:00Z",
+  "updated_at": "2025-11-23T10:30:00Z"
+}
+```
+
 Create Product (multipart/form-data):
 ```
 name: "Smartphone X"
-description: "Latest smartphone"
+description: "Latest smartphone with 5G"
 category: 1
 price: 599.99
 stock: 50
 uploaded_images[]: image1.jpg
 uploaded_images[]: image2.jpg
+```
+
+Product List Response:
+```json
+{
+  "id": 1,
+  "name": "Smartphone X",
+  "description": "Latest smartphone with 5G",
+  "category": 1,
+  "category_name": "Electronics",
+  "price": "599.99",
+  "stock": 50,
+  "status": "pending",
+  "seller": "user-uuid",
+  "seller_name": "john_doe",
+  "primary_image": {
+    "id": 1,
+    "image": "http://localhost:8000/media/products/image1.jpg",
+    "image_url": "http://localhost:8000/media/products/image1.jpg",
+    "is_primary": true,
+    "created_at": "2025-11-23T10:30:00Z"
+  },
+  "created_at": "2025-11-23T10:30:00Z"
+}
+```
+
+Product Detail Response:
+```json
+{
+  "id": 1,
+  "name": "Smartphone X",
+  "description": "Latest smartphone with 5G",
+  "category": 1,
+  "category_name": "Electronics",
+  "price": "599.99",
+  "stock": 50,
+  "status": "approved",
+  "seller": "user-uuid",
+  "seller_name": "john_doe",
+  "images": [
+    {
+      "id": 1,
+      "image": "http://localhost:8000/media/products/image1.jpg",
+      "image_url": "http://localhost:8000/media/products/image1.jpg",
+      "is_primary": true,
+      "created_at": "2025-11-23T10:30:00Z"
+    },
+    {
+      "id": 2,
+      "image": "http://localhost:8000/media/products/image2.jpg",
+      "image_url": "http://localhost:8000/media/products/image2.jpg",
+      "is_primary": false,
+      "created_at": "2025-11-23T10:30:00Z"
+    }
+  ],
+  "rejection_reason": null,
+  "created_at": "2025-11-23T10:30:00Z",
+  "updated_at": "2025-11-23T10:30:00Z",
+  "approved_at": "2025-11-23T11:00:00Z",
+  "approved_by": "admin-uuid"
+}
 ```
 
 Approve Product:
@@ -354,7 +813,7 @@ POST /shop/products/{id}/approve/
 Reject Product:
 ```json
 {
-  "rejection_reason": "Images are not clear"
+  "rejection_reason": "Images are not clear enough"
 }
 ```
 
@@ -363,6 +822,38 @@ Add Item to Cart:
 {
   "product_id": 1,
   "quantity": 2
+}
+```
+
+Cart Response:
+```json
+{
+  "id": 1,
+  "user": "user-uuid",
+  "items": [
+    {
+      "id": 1,
+      "product": 1,
+      "product_name": "Smartphone X",
+      "product_price": "599.99",
+      "product_image": {
+        "id": 1,
+        "image": "http://localhost:8000/media/products/image1.jpg",
+        "image_url": "http://localhost:8000/media/products/image1.jpg",
+        "is_primary": true,
+        "created_at": "2025-11-23T10:30:00Z"
+      },
+      "quantity": 2,
+      "subtotal": "1199.98",
+      "available_stock": 50,
+      "added_at": "2025-11-23T10:30:00Z",
+      "updated_at": "2025-11-23T10:30:00Z"
+    }
+  ],
+  "total_items": 1,
+  "total_price": "1199.98",
+  "created_at": "2025-11-23T10:00:00Z",
+  "updated_at": "2025-11-23T10:30:00Z"
 }
 ```
 
@@ -377,7 +868,7 @@ Checkout from Cart:
 ```json
 {
   "cart_item_ids": [1, 2],
-  "shipping_address": "123 Main St",
+  "shipping_address": "123 Main St, Apt 4B",
   "shipping_city": "New York",
   "shipping_postal_code": "10001",
   "shipping_country": "USA",
@@ -391,11 +882,41 @@ Buy Now:
 {
   "product_id": 1,
   "quantity": 1,
-  "shipping_address": "123 Main St",
+  "shipping_address": "123 Main St, Apt 4B",
   "shipping_city": "New York",
   "shipping_postal_code": "10001",
   "shipping_country": "USA",
-  "shipping_phone": "+1234567890"
+  "shipping_phone": "+1234567890",
+  "notes": "Please ring doorbell"
+}
+```
+
+Order Response:
+```json
+{
+  "id": 1,
+  "user": "user-uuid",
+  "user_name": "john_doe",
+  "total_amount": "599.99",
+  "status": "pending",
+  "shipping_address": "123 Main St, Apt 4B",
+  "shipping_city": "New York",
+  "shipping_postal_code": "10001",
+  "shipping_country": "USA",
+  "shipping_phone": "+1234567890",
+  "items": [
+    {
+      "id": 1,
+      "product": 1,
+      "product_name": "Smartphone X",
+      "product_price": "599.99",
+      "quantity": 1,
+      "subtotal": "599.99"
+    }
+  ],
+  "notes": "Please ring doorbell",
+  "created_at": "2025-11-23T10:35:00Z",
+  "updated_at": "2025-11-23T10:35:00Z"
 }
 ```
 
@@ -411,24 +932,24 @@ Update Order Status:
 ## Endpoint Statistics
 
 ### By Category
-- **Account Management**: 13 endpoints
-- **Friend Management**: 5 endpoints
+- **Account Management**: 14 endpoints
+- **Friend Management**: 6 endpoints
 - **Posts**: 9 endpoints
 - **Comments**: 5 endpoints
 - **Societies**: 10 endpoints
 - **Stories**: 4 endpoints
 - **Notifications**: 2 endpoints
 - **User Blocking**: 2 endpoints
-- **Chat & Messaging**: 13 endpoints (+ 2 WebSocket endpoints)
-- **Shop Management**: 26 endpoints
+- **Chat & Messaging**: 20 endpoints (+ 2 WebSocket endpoints)
+- **Shop Management**: 29 endpoints
 
-### Total: 89 REST endpoints + 2 WebSocket endpoints
+### Total: 101 REST endpoints + 2 WebSocket endpoints
 
 ### By HTTP Method
-- **GET**: 30 endpoints (read operations)
-- **POST**: 35 endpoints (create/action operations)
-- **PUT**: 4 endpoints (full update operations)
-- **PATCH**: 6 endpoints (partial update operations)
+- **GET**: 44 endpoints (read operations)
+- **POST**: 38 endpoints (create/action operations)
+- **PUT**: 6 endpoints (full update operations)
+- **PATCH**: 8 endpoints (partial update operations)
 - **DELETE**: 14 endpoints (delete operations)
 
 ---

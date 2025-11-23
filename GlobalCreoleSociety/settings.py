@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_cleanup',
     'channels',
     'django_filters',
+    'drf_spectacular',  # API documentation
 
     'accounts',
     'social',
@@ -173,6 +174,50 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,  # Default page size
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# drf-spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Global Creole Society API',
+    'DESCRIPTION': 'API documentation for Global Creole Society - A social media platform with chat, posts, societies, stories, and e-commerce features.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SCHEMA_PATH_PREFIX': '/api/',
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+        'filter': True,
+    },
+    'SECURITY': [
+        {
+            'BearerAuth': []
+        }
+    ],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
+    'TAGS': [
+        {'name': 'Authentication', 'description': 'User authentication and account management'},
+        {'name': 'Friends', 'description': 'Friend requests and friendship management'},
+        {'name': 'Posts', 'description': 'Social posts with media and comments'},
+        {'name': 'Comments', 'description': 'Comments on posts'},
+        {'name': 'Societies', 'description': 'Groups/Societies management'},
+        {'name': 'Stories', 'description': '24-hour stories feature'},
+        {'name': 'Notifications', 'description': 'User notifications'},
+        {'name': 'User Blocking', 'description': 'Block/unblock users'},
+        {'name': 'Chat', 'description': 'Private messaging and conversations'},
+        {'name': 'Global Chat', 'description': 'Public global chat room'},
+        {'name': 'Shop', 'description': 'E-commerce features - products, cart, orders'},
+    ],
 }
 
 # Simple JWT settings

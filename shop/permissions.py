@@ -46,13 +46,9 @@ class IsProductOwner(permissions.BasePermission):
         if request.user and request.user.is_staff:
             return True
         
-        # Product owner can edit their own products (only if pending)
+        # Product owner can edit their own products
         if hasattr(obj, 'seller'):
-            if obj.seller == request.user:
-                # Only allow editing if product is still pending
-                if request.method in ['PUT', 'PATCH']:
-                    return obj.status == 'pending'
-                return True
+            return obj.seller == request.user
         
         return False
 

@@ -1,0 +1,4628 @@
+openapi: 3.0.3
+info:
+  title: Global Creole Society API
+  version: 1.0.0
+  description: API documentation for Global Creole Society - A social media platform
+    with chat, posts, societies, stories, and e-commerce features.
+paths:
+  /api/accounts/add-email/:
+    post:
+      operationId: accounts_add_email_create
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddEmailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AddEmailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AddEmailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/accounts/add-phone-number/:
+    post:
+      operationId: accounts_add_phone_number_create
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPhoneNumberRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AddPhoneNumberRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AddPhoneNumberRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/accounts/change-email/:
+    put:
+      operationId: accounts_change_email_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangeEmailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: accounts_change_email_partial_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedChangeEmailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedChangeEmailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedChangeEmailRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/change-password/:
+    put:
+      operationId: accounts_change_password_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: accounts_change_password_partial_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedChangePasswordRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedChangePasswordRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedChangePasswordRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/change-phone-number/:
+    put:
+      operationId: accounts_change_phone_number_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePhoneNumberRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ChangePhoneNumberRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ChangePhoneNumberRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: accounts_change_phone_number_partial_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedChangePhoneNumberRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedChangePhoneNumberRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedChangePhoneNumberRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/login/:
+    post:
+      operationId: accounts_login_create
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Login'
+          description: ''
+  /api/accounts/logout/:
+    post:
+      operationId: accounts_logout_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/profile/:
+    get:
+      operationId: accounts_profile_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: accounts_profile_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: accounts_profile_partial_update
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/profile-lock/:
+    post:
+      operationId: accounts_profile_lock_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/profile/{id}/:
+    get:
+      operationId: accounts_profile_retrieve_2
+      description: View any user's profile by user ID
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/accounts/register/:
+    post:
+      operationId: accounts_register_create
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
+  /api/accounts/send-otp/:
+    post:
+      operationId: accounts_send_otp_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/token/refresh/:
+    post:
+      operationId: accounts_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      security:
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/chat/conversations/:
+    get:
+      operationId: chat_conversations_list
+      description: ViewSet for managing conversations
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConversationListList'
+          description: ''
+    post:
+      operationId: chat_conversations_create
+      description: Create or get existing conversation with another user
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /api/chat/conversations/{id}/:
+    get:
+      operationId: chat_conversations_retrieve
+      description: ViewSet for managing conversations
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+    put:
+      operationId: chat_conversations_update
+      description: ViewSet for managing conversations
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+    patch:
+      operationId: chat_conversations_partial_update
+      description: ViewSet for managing conversations
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+    delete:
+      operationId: chat_conversations_destroy
+      description: Delete a conversation
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/chat/conversations/{id}/mark_as_read/:
+    post:
+      operationId: chat_conversations_mark_as_read_create
+      description: Mark all messages in a conversation as read
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /api/chat/conversations/{id}/messages/:
+    get:
+      operationId: chat_conversations_messages_retrieve
+      description: |-
+        Get messages for a specific conversation with pagination
+        Messages are returned in reverse chronological order (newest first) for infinite scroll
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /api/chat/conversations/{id}/send_message/:
+    post:
+      operationId: chat_conversations_send_message_create
+      description: Send a message in a conversation
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /api/chat/conversations/search_friends/:
+    get:
+      operationId: chat_conversations_search_friends_retrieve
+      description: |-
+        Search for friends (with or without existing conversations)
+        Useful for starting new conversations
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /api/chat/conversations/unread_count/:
+    get:
+      operationId: chat_conversations_unread_count_retrieve
+      description: Get total unread message count across all conversations
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /api/chat/global-chat/:
+    get:
+      operationId: chat_global_chat_list
+      description: |-
+        ViewSet for global chat messages (read-only via REST API)
+        Real-time messaging happens through WebSocket
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGlobalChatMessageList'
+          description: ''
+  /api/chat/global-chat/{id}/:
+    get:
+      operationId: chat_global_chat_retrieve
+      description: |-
+        ViewSet for global chat messages (read-only via REST API)
+        Real-time messaging happens through WebSocket
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this global chat message.
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalChatMessage'
+          description: ''
+  /api/chat/global-chat/send_message/:
+    post:
+      operationId: chat_global_chat_send_message_create
+      description: Send a message to global chat
+      tags:
+      - chat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GlobalChatMessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GlobalChatMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GlobalChatMessageRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalChatMessage'
+          description: ''
+  /api/chat/messages/:
+    get:
+      operationId: chat_messages_list
+      description: ViewSet for managing messages
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMessageList'
+          description: ''
+    post:
+      operationId: chat_messages_create
+      description: ViewSet for managing messages
+      tags:
+      - chat
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+          description: ''
+  /api/chat/messages/{id}/:
+    get:
+      operationId: chat_messages_retrieve
+      description: ViewSet for managing messages
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+          description: ''
+    put:
+      operationId: chat_messages_update
+      description: ViewSet for managing messages
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+          description: ''
+    patch:
+      operationId: chat_messages_partial_update
+      description: ViewSet for managing messages
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMessageRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMessageRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+          description: ''
+    delete:
+      operationId: chat_messages_destroy
+      description: ViewSet for managing messages
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/chat/messages/{id}/mark_read/:
+    post:
+      operationId: chat_messages_mark_read_create
+      description: Mark a specific message as read
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - chat
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+          description: ''
+  /api/shop/cart/:
+    get:
+      operationId: shop_cart_retrieve
+      description: Get user's cart
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/shop/cart/add-item/:
+    post:
+      operationId: shop_cart_add_item_create
+      description: Add item to cart
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/shop/cart/clear/:
+    delete:
+      operationId: shop_cart_clear_destroy
+      description: Clear all items from cart
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/shop/cart/remove-item/{item_id}/:
+    delete:
+      operationId: shop_cart_remove_item_destroy
+      description: Remove item from cart
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/shop/cart/update-item/{item_id}/:
+    patch:
+      operationId: shop_cart_update_item_partial_update
+      description: Update cart item quantity
+      parameters:
+      - in: path
+        name: item_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/shop/categories/:
+    get:
+      operationId: shop_categories_list
+      description: |-
+        ViewSet for managing product categories.
+        Admin can create, update, delete categories.
+        All users can view categories.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: shop_categories_create
+      description: |-
+        ViewSet for managing product categories.
+        Admin can create, update, delete categories.
+        All users can view categories.
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/shop/categories/{id}/:
+    get:
+      operationId: shop_categories_retrieve
+      description: |-
+        ViewSet for managing product categories.
+        Admin can create, update, delete categories.
+        All users can view categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: shop_categories_update
+      description: |-
+        ViewSet for managing product categories.
+        Admin can create, update, delete categories.
+        All users can view categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: shop_categories_partial_update
+      description: |-
+        ViewSet for managing product categories.
+        Admin can create, update, delete categories.
+        All users can view categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: shop_categories_destroy
+      description: |-
+        ViewSet for managing product categories.
+        Admin can create, update, delete categories.
+        All users can view categories.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/shop/orders/:
+    get:
+      operationId: shop_orders_list
+      description: |-
+        ViewSet for viewing orders.
+        Users can view their own orders.
+        Admin can view all orders and update order status.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrderList'
+          description: ''
+  /api/shop/orders/{id}/:
+    get:
+      operationId: shop_orders_retrieve
+      description: |-
+        ViewSet for viewing orders.
+        Users can view their own orders.
+        Admin can view all orders and update order status.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/shop/orders/{id}/update-status/:
+    patch:
+      operationId: shop_orders_update_status_partial_update
+      description: Admin endpoint to update order status
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOrderRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/shop/orders/buy-now/:
+    post:
+      operationId: shop_orders_buy_now_create
+      description: |-
+        Buy a single product directly without adding to cart.
+        Creates an order with a single item.
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/shop/orders/checkout/:
+    post:
+      operationId: shop_orders_checkout_create
+      description: |-
+        Checkout with selected cart items.
+        Creates an order from cart items.
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+          description: ''
+  /api/shop/products/:
+    get:
+      operationId: shop_products_list
+      description: |-
+        ViewSet for managing products.
+        Users can create products (goes to pending state).
+        Admin can approve/reject products.
+        Only approved products are visible to regular users.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductListList'
+          description: ''
+    post:
+      operationId: shop_products_create
+      description: |-
+        ViewSet for managing products.
+        Users can create products (goes to pending state).
+        Admin can approve/reject products.
+        Only approved products are visible to regular users.
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/shop/products/{id}/:
+    get:
+      operationId: shop_products_retrieve
+      description: |-
+        ViewSet for managing products.
+        Users can create products (goes to pending state).
+        Admin can approve/reject products.
+        Only approved products are visible to regular users.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+    put:
+      operationId: shop_products_update
+      description: |-
+        ViewSet for managing products.
+        Users can create products (goes to pending state).
+        Admin can approve/reject products.
+        Only approved products are visible to regular users.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+    patch:
+      operationId: shop_products_partial_update
+      description: |-
+        ViewSet for managing products.
+        Users can create products (goes to pending state).
+        Admin can approve/reject products.
+        Only approved products are visible to regular users.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProductDetailRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+    delete:
+      operationId: shop_products_destroy
+      description: |-
+        ViewSet for managing products.
+        Users can create products (goes to pending state).
+        Admin can approve/reject products.
+        Only approved products are visible to regular users.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/shop/products/{id}/add-image/:
+    post:
+      operationId: shop_products_add_image_create
+      description: Add an image to a product
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/shop/products/{id}/approve/:
+    post:
+      operationId: shop_products_approve_create
+      description: Admin endpoint to approve a product
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/shop/products/{id}/delete-image/{image_id}/:
+    delete:
+      operationId: shop_products_delete_image_destroy
+      description: Delete a product image
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: image_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/shop/products/{id}/reject/:
+    post:
+      operationId: shop_products_reject_create
+      description: Admin endpoint to reject a product
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - shop
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProductDetailRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/shop/products/my-products/:
+    get:
+      operationId: shop_products_my_products_retrieve
+      description: Endpoint to list current user's products
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/shop/products/pending/:
+    get:
+      operationId: shop_products_pending_retrieve
+      description: Admin endpoint to list all pending products
+      tags:
+      - shop
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+          description: ''
+  /api/social/comments/{id}/:
+    get:
+      operationId: social_comments_retrieve
+      description: View, update, or delete a comment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+    put:
+      operationId: social_comments_update
+      description: View, update, or delete a comment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+    patch:
+      operationId: social_comments_partial_update
+      description: View, update, or delete a comment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCommentRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+    delete:
+      operationId: social_comments_destroy
+      description: View, update, or delete a comment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/social/comments/{id}/like/:
+    post:
+      operationId: social_comments_like_create
+      description: Like or unlike a comment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/friends/:
+    get:
+      operationId: social_friends_list
+      description: List all friends of the user
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFriendshipList'
+          description: ''
+  /api/social/friends/{user_id}/unfriend/:
+    delete:
+      operationId: social_friends_unfriend_destroy
+      description: Remove a friend
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/social/friends/request/:
+    post:
+      operationId: social_friends_request_create
+      description: Send a friend request to another user
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/friends/requests/:
+    get:
+      operationId: social_friends_requests_list
+      description: List all pending friend requests received by the user
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFriendshipList'
+          description: ''
+  /api/social/friends/requests/{user_id}/response/:
+    post:
+      operationId: social_friends_requests_response_create
+      description: Accept or reject a friend request
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/friends/suggestions/:
+    get:
+      operationId: social_friends_suggestions_retrieve
+      description: Get suggested users to send friend requests to
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/notifications/:
+    get:
+      operationId: social_notifications_list
+      description: List user's notifications
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNotificationList'
+          description: ''
+  /api/social/notifications/mark-read/:
+    post:
+      operationId: social_notifications_mark_read_create
+      description: Mark notification(s) as read
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/posts/:
+    get:
+      operationId: social_posts_list
+      description: List posts visible to the user (feed)
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPostList'
+          description: ''
+  /api/social/posts/{id}/:
+    get:
+      operationId: social_posts_retrieve
+      description: View, update, or delete a specific post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+    put:
+      operationId: social_posts_update
+      description: View, update, or delete a specific post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PostRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+    patch:
+      operationId: social_posts_partial_update
+      description: View, update, or delete a specific post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPostRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPostRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPostRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+          description: ''
+    delete:
+      operationId: social_posts_destroy
+      description: View, update, or delete a specific post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/social/posts/{id}/comments/:
+    get:
+      operationId: social_posts_comments_list
+      description: List or create comments on a post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCommentList'
+          description: ''
+    post:
+      operationId: social_posts_comments_create
+      description: List or create comments on a post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CommentRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+          description: ''
+  /api/social/posts/{id}/like/:
+    post:
+      operationId: social_posts_like_create
+      description: Like or unlike a post
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/posts/create/:
+    post:
+      operationId: social_posts_create_create
+      description: Create a new post
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PostCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PostCreateRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostCreate'
+          description: ''
+  /api/social/societies/:
+    get:
+      operationId: social_societies_list
+      description: |-
+        List societies with optional filtering
+
+        Query Parameters:
+        - my_societies=true: Returns only societies user is a member of
+        - available=true: Returns only societies user is NOT a member of (available to join)
+        - (no params): Returns both user's societies and public societies
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSocietyList'
+          description: ''
+  /api/social/societies/{id}/:
+    get:
+      operationId: social_societies_retrieve
+      description: View, update, or delete a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Society'
+          description: ''
+    put:
+      operationId: social_societies_update
+      description: View, update, or delete a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocietyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SocietyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SocietyRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Society'
+          description: ''
+    patch:
+      operationId: social_societies_partial_update
+      description: View, update, or delete a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSocietyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSocietyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSocietyRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Society'
+          description: ''
+    delete:
+      operationId: social_societies_destroy
+      description: View, update, or delete a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/social/societies/{id}/join/:
+    post:
+      operationId: social_societies_join_create
+      description: Join a society (request to join for private societies)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/societies/{id}/leave/:
+    delete:
+      operationId: social_societies_leave_destroy
+      description: Leave a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/social/societies/{id}/members/:
+    get:
+      operationId: social_societies_members_list
+      description: List members of a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSocietyMembershipList'
+          description: ''
+  /api/social/societies/{id}/posts/:
+    get:
+      operationId: social_societies_posts_list
+      description: List posts in a society
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPostList'
+          description: ''
+  /api/social/societies/create/:
+    post:
+      operationId: social_societies_create_create
+      description: Create a new society
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SocietyRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SocietyRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SocietyRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Society'
+          description: ''
+  /api/social/stories/:
+    get:
+      operationId: social_stories_list
+      description: List active stories from friends
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStoryList'
+          description: ''
+  /api/social/stories/{id}/:
+    get:
+      operationId: social_stories_retrieve
+      description: View or delete a story
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Story'
+          description: ''
+    delete:
+      operationId: social_stories_destroy
+      description: View or delete a story
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/social/stories/create/:
+    post:
+      operationId: social_stories_create_create
+      description: Create a new story
+      tags:
+      - social
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoryCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StoryCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StoryCreateRequest'
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryCreate'
+          description: ''
+  /api/social/users/{id}/block/:
+    post:
+      operationId: social_users_block_create
+      description: Block a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/social/users/{id}/unblock/:
+    delete:
+      operationId: social_users_unblock_destroy
+      description: Unblock a user
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - social
+      security:
+      - jwtAuth: []
+      - BearerAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    AddEmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    AddPhoneNumberRequest:
+      type: object
+      properties:
+        phone_number:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - phone_number
+    Category:
+      type: object
+      description: Serializer for Category model
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        product_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - product_count
+      - updated_at
+    CategoryRequest:
+      type: object
+      description: Serializer for Category model
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+      required:
+      - name
+    ChangeEmailRequest:
+      type: object
+      properties:
+        new_email:
+          type: string
+          format: email
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_email
+      - password
+    ChangePasswordRequest:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_password
+      - old_password
+    ChangePhoneNumberRequest:
+      type: object
+      properties:
+        new_phone_number:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - new_phone_number
+      - password
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        post:
+          type: string
+          format: uuid
+          readOnly: true
+        content:
+          type: string
+        like_count:
+          type: integer
+          readOnly: true
+        is_liked:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content
+      - created_at
+      - id
+      - is_liked
+      - like_count
+      - post
+      - updated_at
+      - user
+    CommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+      required:
+      - content
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          readOnly: true
+        other_participant:
+          type: string
+          readOnly: true
+        last_message:
+          allOf:
+          - $ref: '#/components/schemas/Message'
+          readOnly: true
+        unread_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - last_message
+      - other_participant
+      - participants
+      - unread_count
+      - updated_at
+    ConversationList:
+      type: object
+      description: Lightweight serializer for conversation list
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        other_participant:
+          type: string
+          readOnly: true
+        last_message:
+          allOf:
+          - $ref: '#/components/schemas/Message'
+          readOnly: true
+        unread_count:
+          type: string
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - id
+      - last_message
+      - other_participant
+      - unread_count
+      - updated_at
+    Education:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        collage:
+          type: string
+          nullable: true
+          maxLength: 255
+        subject:
+          type: string
+          nullable: true
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - updated_at
+    EducationRequest:
+      type: object
+      properties:
+        collage:
+          type: string
+          nullable: true
+          maxLength: 255
+        subject:
+          type: string
+          nullable: true
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+    Friendship:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        requester:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        receiver:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/FriendshipStatusEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - receiver
+      - requester
+      - updated_at
+    FriendshipStatusEnum:
+      enum:
+      - pending
+      - accepted
+      - blocked
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `accepted` - Accepted
+        * `blocked` - Blocked
+    GlobalChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        sender:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        content:
+          type: string
+        file:
+          type: string
+          format: uri
+          nullable: true
+        file_url:
+          type: string
+          readOnly: true
+        file_type:
+          type: string
+          maxLength: 50
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - file_url
+      - id
+      - sender
+      - updated_at
+    GlobalChatMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        file:
+          type: string
+          format: binary
+          nullable: true
+        file_type:
+          type: string
+          maxLength: 50
+    Location:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - updated_at
+    LocationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+          maxLength: 255
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - email
+      - password
+    MediaTypeEnum:
+      enum:
+      - image
+      - video
+      type: string
+      description: |-
+        * `image` - Image
+        * `video` - Video
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        conversation:
+          type: string
+          format: uuid
+        sender:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        content:
+          type: string
+        file:
+          type: string
+          format: uri
+          nullable: true
+        file_url:
+          type: string
+          readOnly: true
+        file_type:
+          type: string
+          maxLength: 50
+        is_read:
+          type: boolean
+          readOnly: true
+        read_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - conversation
+      - created_at
+      - file_url
+      - id
+      - is_read
+      - read_at
+      - sender
+      - updated_at
+    MessageRequest:
+      type: object
+      properties:
+        conversation:
+          type: string
+          format: uuid
+        content:
+          type: string
+        file:
+          type: string
+          format: binary
+          nullable: true
+        file_type:
+          type: string
+          maxLength: 50
+      required:
+      - conversation
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        sender:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        notification_type:
+          allOf:
+          - $ref: '#/components/schemas/NotificationTypeEnum'
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        post:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        post_content:
+          type: string
+          readOnly: true
+        comment:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        society:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        society_name:
+          type: string
+          readOnly: true
+        is_read:
+          type: boolean
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - comment
+      - created_at
+      - id
+      - is_read
+      - message
+      - notification_type
+      - post
+      - post_content
+      - sender
+      - society
+      - society_name
+    NotificationTypeEnum:
+      enum:
+      - friend_request
+      - friend_accept
+      - post_like
+      - post_comment
+      - comment_like
+      - society_invite
+      - society_join
+      type: string
+      description: |-
+        * `friend_request` - Friend Request
+        * `friend_accept` - Friend Accept
+        * `post_like` - Post Like
+        * `post_comment` - Post Comment
+        * `comment_like` - Comment Like
+        * `society_invite` - Society Invite
+        * `society_join` - Society Join Request
+    Order:
+      type: object
+      description: Serializer for Order model
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        user_name:
+          type: string
+          readOnly: true
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
+        shipping_address:
+          type: string
+        shipping_city:
+          type: string
+          maxLength: 100
+        shipping_postal_code:
+          type: string
+          maxLength: 20
+        shipping_country:
+          type: string
+          maxLength: 100
+        shipping_phone:
+          type: string
+          maxLength: 20
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+          readOnly: true
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - items
+      - shipping_address
+      - shipping_city
+      - shipping_country
+      - shipping_phone
+      - shipping_postal_code
+      - total_amount
+      - updated_at
+      - user
+      - user_name
+    OrderItem:
+      type: object
+      description: Serializer for OrderItem model
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        product:
+          type: integer
+          nullable: true
+        product_name:
+          type: string
+          readOnly: true
+        product_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+      required:
+      - id
+      - product_name
+      - product_price
+      - quantity
+      - subtotal
+    OrderItemRequest:
+      type: object
+      description: Serializer for OrderItem model
+      properties:
+        product:
+          type: integer
+          nullable: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 1
+          format: int64
+      required:
+      - quantity
+    OrderRequest:
+      type: object
+      description: Serializer for Order model
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
+        shipping_address:
+          type: string
+          minLength: 1
+        shipping_city:
+          type: string
+          minLength: 1
+          maxLength: 100
+        shipping_postal_code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        shipping_country:
+          type: string
+          minLength: 1
+          maxLength: 100
+        shipping_phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+        notes:
+          type: string
+      required:
+      - shipping_address
+      - shipping_city
+      - shipping_country
+      - shipping_phone
+      - shipping_postal_code
+    OrderStatusEnum:
+      enum:
+      - pending
+      - processing
+      - shipped
+      - delivered
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `processing` - Processing
+        * `shipped` - Shipped
+        * `delivered` - Delivered
+        * `cancelled` - Cancelled
+    PaginatedCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedCommentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+    PaginatedConversationListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConversationList'
+    PaginatedFriendshipList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Friendship'
+    PaginatedGlobalChatMessageList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlobalChatMessage'
+    PaginatedMessageList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    PaginatedNotificationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+    PaginatedOrderList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+    PaginatedPostList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+    PaginatedProductListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductList'
+    PaginatedSocietyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Society'
+    PaginatedSocietyMembershipList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocietyMembership'
+    PaginatedStoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Story'
+    PatchedCategoryRequest:
+      type: object
+      description: Serializer for Category model
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+    PatchedChangeEmailRequest:
+      type: object
+      properties:
+        new_email:
+          type: string
+          format: email
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedChangePasswordRequest:
+      type: object
+      properties:
+        old_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedChangePhoneNumberRequest:
+      type: object
+      properties:
+        new_phone_number:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        code:
+          type: string
+          writeOnly: true
+          minLength: 1
+    PatchedCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+    PatchedMessageRequest:
+      type: object
+      properties:
+        conversation:
+          type: string
+          format: uuid
+        content:
+          type: string
+        file:
+          type: string
+          format: binary
+          nullable: true
+        file_type:
+          type: string
+          maxLength: 50
+    PatchedOrderRequest:
+      type: object
+      description: Serializer for Order model
+      properties:
+        status:
+          $ref: '#/components/schemas/OrderStatusEnum'
+        shipping_address:
+          type: string
+          minLength: 1
+        shipping_city:
+          type: string
+          minLength: 1
+          maxLength: 100
+        shipping_postal_code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        shipping_country:
+          type: string
+          minLength: 1
+          maxLength: 100
+        shipping_phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+        notes:
+          type: string
+    PatchedPostRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+    PatchedProductDetailRequest:
+      type: object
+      description: Serializer for product detail view
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          minLength: 1
+        category:
+          type: integer
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        uploaded_images:
+          type: array
+          items:
+            type: string
+            format: binary
+          writeOnly: true
+    PatchedSocietyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        cover_image:
+          type: string
+          format: binary
+          nullable: true
+        privacy:
+          $ref: '#/components/schemas/SocietyPrivacyEnum'
+    PatchedUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          title: Email address
+          maxLength: 254
+        profile_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+        profile_image:
+          type: string
+          format: binary
+          nullable: true
+        website:
+          type: string
+        phone_number:
+          type: string
+          maxLength: 20
+        gender:
+          type: string
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        profile_lock:
+          type: boolean
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+        society:
+          type: string
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/PostMedia'
+          readOnly: true
+        like_count:
+          type: integer
+          readOnly: true
+        comment_count:
+          type: integer
+          readOnly: true
+        is_liked:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - comment_count
+      - created_at
+      - id
+      - is_liked
+      - like_count
+      - media
+      - society
+      - updated_at
+      - user
+    PostCreate:
+      type: object
+      properties:
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+        society:
+          type: string
+          format: uuid
+          nullable: true
+    PostCreateRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+        society:
+          type: string
+          format: uuid
+          nullable: true
+        media_files:
+          type: array
+          items:
+            type: string
+            format: binary
+          writeOnly: true
+        media_captions:
+          type: array
+          items:
+            type: string
+            maxLength: 255
+          writeOnly: true
+    PostMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        media_type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+        file:
+          type: string
+          readOnly: true
+        caption:
+          type: string
+          maxLength: 255
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - file
+      - id
+      - media_type
+    PostMediaRequest:
+      type: object
+      properties:
+        media_type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+        caption:
+          type: string
+          maxLength: 255
+      required:
+      - media_type
+    PostRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+    Privacy5c7Enum:
+      enum:
+      - public
+      - friends
+      - private
+      type: string
+      description: |-
+        * `public` - Public
+        * `friends` - Friends
+        * `private` - Private
+    ProductDetail:
+      type: object
+      description: Serializer for product detail view
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusDe3Enum'
+          readOnly: true
+        seller:
+          type: string
+          format: uuid
+          readOnly: true
+        seller_name:
+          type: string
+          readOnly: true
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImage'
+          readOnly: true
+        rejection_reason:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        approved_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+      required:
+      - approved_at
+      - approved_by
+      - category
+      - category_name
+      - created_at
+      - description
+      - id
+      - images
+      - name
+      - price
+      - rejection_reason
+      - seller
+      - seller_name
+      - status
+      - updated_at
+    ProductDetailRequest:
+      type: object
+      description: Serializer for product detail view
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          minLength: 1
+        category:
+          type: integer
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        uploaded_images:
+          type: array
+          items:
+            type: string
+            format: binary
+          writeOnly: true
+      required:
+      - category
+      - description
+      - name
+      - price
+    ProductImage:
+      type: object
+      description: Serializer for ProductImage model
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        image:
+          type: string
+          format: uri
+        image_url:
+          type: string
+          readOnly: true
+        is_primary:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - image
+      - image_url
+    ProductImageRequest:
+      type: object
+      description: Serializer for ProductImage model
+      properties:
+        image:
+          type: string
+          format: binary
+        is_primary:
+          type: boolean
+      required:
+      - image
+    ProductList:
+      type: object
+      description: Serializer for listing products
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        stock:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusDe3Enum'
+          readOnly: true
+        seller:
+          type: string
+          format: uuid
+          readOnly: true
+        seller_name:
+          type: string
+          readOnly: true
+        primary_image:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - category_name
+      - created_at
+      - description
+      - id
+      - name
+      - price
+      - primary_image
+      - seller
+      - seller_name
+      - status
+    Register:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        profile_name:
+          type: string
+          maxLength: 150
+        phone_number:
+          type: string
+          maxLength: 20
+        gender:
+          type: string
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        share_data:
+          type: boolean
+      required:
+      - email
+      - profile_name
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          title: Email address
+          maxLength: 254
+        profile_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        phone_number:
+          type: string
+          maxLength: 20
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        gender:
+          type: string
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        share_data:
+          type: boolean
+      required:
+      - email
+      - password
+      - profile_name
+    RoleEnum:
+      enum:
+      - admin
+      - moderator
+      - member
+      type: string
+      description: |-
+        * `admin` - Admin
+        * `moderator` - Moderator
+        * `member` - Member
+    Society:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        cover_image:
+          type: string
+          format: uri
+          nullable: true
+        cover_picture:
+          type: string
+          format: uri
+          readOnly: true
+        privacy:
+          $ref: '#/components/schemas/SocietyPrivacyEnum'
+        creator:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        member_count:
+          type: integer
+          readOnly: true
+        members_count:
+          type: integer
+          readOnly: true
+        user_membership:
+          type: string
+          readOnly: true
+        is_member:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - cover_picture
+      - created_at
+      - creator
+      - id
+      - is_member
+      - member_count
+      - members_count
+      - name
+      - updated_at
+      - user_membership
+    SocietyMembership:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        society:
+          type: string
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/SocietyMembershipStatusEnum'
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - society
+      - updated_at
+      - user
+    SocietyMembershipStatusEnum:
+      enum:
+      - pending
+      - accepted
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `accepted` - Accepted
+        * `rejected` - Rejected
+    SocietyPrivacyEnum:
+      enum:
+      - public
+      - private
+      type: string
+      description: |-
+        * `public` - Public
+        * `private` - Private
+    SocietyRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        cover_image:
+          type: string
+          format: binary
+          nullable: true
+        privacy:
+          $ref: '#/components/schemas/SocietyPrivacyEnum'
+      required:
+      - name
+    StatusDe3Enum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `approved` - Approved
+        * `rejected` - Rejected
+    Story:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserBasic'
+          readOnly: true
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoryMedia'
+          readOnly: true
+        view_count:
+          type: string
+          readOnly: true
+        is_viewed:
+          type: string
+          readOnly: true
+        is_active:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - expires_at
+      - id
+      - is_active
+      - is_viewed
+      - media
+      - user
+      - view_count
+    StoryCreate:
+      type: object
+      properties:
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+    StoryCreateRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        privacy:
+          $ref: '#/components/schemas/Privacy5c7Enum'
+        media_files:
+          type: array
+          items:
+            type: string
+            format: binary
+          writeOnly: true
+    StoryMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        media_type:
+          $ref: '#/components/schemas/MediaTypeEnum'
+        file:
+          type: string
+          format: uri
+          pattern: (?:jpg|jpeg|png|gif|mp4|mov|avi)$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - file
+      - id
+      - media_type
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenRefreshRequest:
+      type: object
+      properties:
+        refresh:
+          type: string
+          minLength: 1
+      required:
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        profile_name:
+          type: string
+          maxLength: 150
+        description:
+          type: string
+        profile_image:
+          type: string
+          format: uri
+          nullable: true
+        profile_image_url:
+          type: string
+          readOnly: true
+        website:
+          type: string
+        phone_number:
+          type: string
+          maxLength: 20
+        gender:
+          type: string
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        profile_lock:
+          type: boolean
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+          readOnly: true
+        works:
+          type: array
+          items:
+            $ref: '#/components/schemas/Work'
+          readOnly: true
+        educations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Education'
+          readOnly: true
+      required:
+      - date_joined
+      - educations
+      - email
+      - id
+      - locations
+      - profile_image_url
+      - profile_name
+      - works
+    UserBasic:
+      type: object
+      description: Basic user info for nested serialization
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+          title: Email address
+        profile_name:
+          type: string
+          readOnly: true
+        profile_image:
+          type: string
+          readOnly: true
+      required:
+      - email
+      - id
+      - profile_image
+      - profile_name
+    UserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          title: Email address
+          maxLength: 254
+        profile_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        description:
+          type: string
+        profile_image:
+          type: string
+          format: binary
+          nullable: true
+        website:
+          type: string
+        phone_number:
+          type: string
+          maxLength: 20
+        gender:
+          type: string
+          maxLength: 20
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        profile_lock:
+          type: boolean
+      required:
+      - email
+      - profile_name
+    Work:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        company:
+          type: string
+          nullable: true
+          maxLength: 255
+        position:
+          type: string
+          nullable: true
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - updated_at
+    WorkRequest:
+      type: object
+      properties:
+        company:
+          type: string
+          nullable: true
+          maxLength: 255
+        position:
+          type: string
+          nullable: true
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: Authentication
+  description: User authentication and account management
+- name: Friends
+  description: Friend requests and friendship management
+- name: Posts
+  description: Social posts with media and comments
+- name: Comments
+  description: Comments on posts
+- name: Societies
+  description: Groups/Societies management
+- name: Stories
+  description: 24-hour stories feature
+- name: Notifications
+  description: User notifications
+- name: User Blocking
+  description: Block/unblock users
+- name: Chat
+  description: Private messaging and conversations
+- name: Global Chat
+  description: Public global chat room
+- name: Shop
+  description: E-commerce features - products, cart, orders

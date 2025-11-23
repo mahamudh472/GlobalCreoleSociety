@@ -134,6 +134,22 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductListSerializer(my_products, many=True, context={'request': request})
         return Response(serializer.data)
 
+    @action(detail=True, methods=['get'], url_path='suggested')
+    def suggested_products(self, request, pk=None):
+        """Get suggested products based on the current product's category"""
+        product = self.get_object()
+        
+        # Get products from the same category, excluding the current product
+        suggested = Product.objects.filter(
+            category=product.category,
+            status='approved'
+        ).exclude(
+            id=product.id
+        ).select_related('category', 'seller').prefetch_related('images')[:8]
+        
+        serializer = ProductListSerializer(suggested, many=True, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'], url_path='add-image')
     def add_image(self, request, pk=None):
         """Add an image to a product"""
@@ -230,6 +246,13 @@ class CartViewSet(viewsets.ViewSet):
         if product.status != 'approved':
             return Response(
                 {'error': 'This product is not available for purchase'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Prevent users from buying their own products
+        if product.seller == request.user:
+            return Response(
+                {'error': 'You cannot add your own product to cart'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -450,6 +473,13 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
         product = Product.objects.get(id=serializer.validated_data['product_id'])
         quantity = serializer.validated_data['quantity']
+
+        # Prevent users from buying their own products
+        if product.seller == request.user:
+            return Response(
+                {'error': 'You cannot buy your own product'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Verify stock
         if quantity > product.stock:

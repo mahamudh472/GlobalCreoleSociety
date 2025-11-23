@@ -40,7 +40,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer for listing products"""
     category_name = serializers.CharField(source='category.name', read_only=True)
-    seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_name = serializers.CharField(source='seller.profile_name', read_only=True)
     primary_image = serializers.SerializerMethodField()
 
     class Meta:
@@ -63,7 +63,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(serializers.ModelSerializer):
     """Serializer for product detail view"""
     category_name = serializers.CharField(source='category.name', read_only=True)
-    seller_name = serializers.CharField(source='seller.username', read_only=True)
+    seller_name = serializers.CharField(source='seller.profile_name', read_only=True)
     images = ProductImageSerializer(many=True, read_only=True)
     uploaded_images = serializers.ListField(
         child=serializers.ImageField(),
@@ -203,7 +203,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     """Serializer for Order model"""
     items = OrderItemSerializer(many=True, read_only=True)
-    user_name = serializers.CharField(source='user.username', read_only=True)
+    user_name = serializers.CharField(source='user.profile_name', read_only=True)
 
     class Meta:
         model = Order
