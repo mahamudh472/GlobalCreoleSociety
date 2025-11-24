@@ -3,10 +3,77 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken
+from django.conf import settings
 from .models import User, OTP, ExtraEmail, ExtraPhoneNumber
 from .serializers import ChangePasswordSerializer, ChangeEmailSerializer, ChangePhoneNumberSerializer, AddEmailSerializer, AddPhoneNumberSerializer, RegisterSerializer, LoginSerializer, UserSerializer
 import random
 from .utils import send_otp_email
+
+
+def set_token_cookies(response, access_token, refresh_token):
+    """
+    Helper function to set JWT tokens in cookies
+    """
+    # Get cookie settings from Django settings or use defaults
+    cookie_samesite = getattr(settings, 'JWT_COOKIE_SAMESITE', 'Lax')
+    cookie_secure = getattr(settings, 'JWT_COOKIE_SECURE', False)
+    cookie_httponly = getattr(settings, 'JWT_COOKIE_HTTPONLY', True)
+    cookie_domain = getattr(settings, 'JWT_COOKIE_DOMAIN', None)
+    cookie_path = getattr(settings, 'JWT_COOKIE_PATH', '/')
+    
+    # Get token lifetimes from Simple JWT settings
+    access_token_lifetime = settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME')
+    refresh_token_lifetime = settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME')
+    
+    # Set access token cookie
+    response.set_cookie(
+        key='access_token',
+        value=access_token,
+        max_age=int(access_token_lifetime.total_seconds()) if access_token_lifetime else 3600,  # 1 hour default
+        httponly=cookie_httponly,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+        domain=cookie_domain,
+        path=cookie_path,
+    )
+    
+    # Set refresh token cookie
+    response.set_cookie(
+        key='refresh_token',
+        value=refresh_token,
+        max_age=int(refresh_token_lifetime.total_seconds()) if refresh_token_lifetime else 604800,  # 7 days default
+        httponly=cookie_httponly,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+        domain=cookie_domain,
+        path=cookie_path,
+    )
+    
+    return response
+
+
+def delete_token_cookies(response):
+    """
+    Helper function to delete JWT tokens from cookies
+    """
+    cookie_domain = getattr(settings, 'JWT_COOKIE_DOMAIN', None)
+    cookie_path = getattr(settings, 'JWT_COOKIE_PATH', '/')
+    
+    response.delete_cookie(
+        key='access_token',
+        domain=cookie_domain,
+        path=cookie_path,
+    )
+    
+    response.delete_cookie(
+        key='refresh_token',
+        domain=cookie_domain,
+        path=cookie_path,
+    )
+    
+    return response
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -20,15 +87,24 @@ class RegisterView(generics.CreateAPIView):
         
         # Generate JWT tokens for the new user
         refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
         
-        return Response({
+        response_data = {
             'user': UserSerializer(user).data,
             'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
+                'refresh': refresh_token,
+                'access': access_token,
             },
             'message': 'User registered successfully'
-        }, status=status.HTTP_201_CREATED)
+        }
+        
+        response = Response(response_data, status=status.HTTP_201_CREATED)
+        
+        # Set tokens in cookies for web browsers
+        response = set_token_cookies(response, access_token, refresh_token)
+        
+        return response
 
 
 class LoginView(APIView):
@@ -43,15 +119,24 @@ class LoginView(APIView):
         
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
         
-        return Response({
+        response_data = {
             'user': UserSerializer(user).data,
             'tokens': {
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
+                'refresh': refresh_token,
+                'access': access_token,
             },
             'message': 'Login successful'
-        }, status=status.HTTP_200_OK)
+        }
+        
+        response = Response(response_data, status=status.HTTP_200_OK)
+        
+        # Set tokens in cookies for web browsers
+        response = set_token_cookies(response, access_token, refresh_token)
+        
+        return response
 
 
 class LogoutView(APIView):
@@ -59,13 +144,28 @@ class LogoutView(APIView):
 
     def post(self, request):
         try:
+            # Try to get refresh token from request body first (for mobile apps)
             refresh_token = request.data.get('refresh')
+            
+            # If not in body, try to get from cookies (for web browsers)
+            if not refresh_token:
+                refresh_token = request.COOKIES.get('refresh_token')
+            
             if refresh_token:
                 token = RefreshToken(refresh_token)
                 token.blacklist()
-            return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+            
+            response = Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+            
+            # Clear cookies for web browsers
+            response = delete_token_cookies(response)
+            
+            return response
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            response = Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            # Still try to clear cookies even if blacklist fails
+            response = delete_token_cookies(response)
+            return response
 
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -312,4 +412,52 @@ class UserLockView(APIView):
         user.save()
         status_msg = 'locked' if user.profile_lock else 'unlocked'
         return Response({'message': f'Profile has been {status_msg}.'}, status=status.HTTP_200_OK)
+
+
+class CookieTokenRefreshView(BaseTokenRefreshView):
+    """
+    Custom token refresh view that handles both cookie and body-based refresh tokens.
+    
+    For mobile apps: Send refresh token in request body
+    For web browsers: Refresh token is automatically read from cookies
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        # Try to get refresh token from request body first (for mobile apps)
+        refresh_token = request.data.get('refresh')
+        
+        # If not in body, try to get from cookies (for web browsers)
+        if not refresh_token:
+            refresh_token = request.COOKIES.get('refresh_token')
+        
+        if not refresh_token:
+            return Response(
+                {'detail': 'Refresh token not found in request body or cookies'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create a mutable copy of request.data if needed
+        if not request.data.get('refresh'):
+            request._full_data = {'refresh': refresh_token}
+        
+        try:
+            # Call parent class method to refresh the token
+            response = super().post(request, *args, **kwargs)
+            
+            # If successful, set the new tokens in cookies
+            if response.status_code == 200:
+                access_token = response.data.get('access')
+                refresh_token = response.data.get('refresh')
+                
+                if access_token:
+                    # Set new tokens in cookies for web browsers
+                    response = set_token_cookies(response, access_token, refresh_token or request.COOKIES.get('refresh_token'))
+            
+            return response
+        except InvalidToken as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
     

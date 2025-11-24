@@ -29,20 +29,38 @@ def get_user_from_token(token_key):
 class JWTAuthMiddleware(BaseMiddleware):
     """
     Custom middleware to authenticate WebSocket connections using JWT
+    Supports tokens from:
+    1. Query string parameter 'token'
+    2. Authorization header
+    3. Cookies (access_token)
     """
     
     async def __call__(self, scope, receive, send):
-        # Get token from query string
+        token = None
+        
+        # 1. Try to get token from query string
         query_string = scope.get('query_string', b'').decode()
         query_params = parse_qs(query_string)
         token = query_params.get('token', [None])[0]
         
-        # If no token in query string, try to get from headers
+        # 2. If no token in query string, try to get from headers
         if not token:
             headers = dict(scope.get('headers', []))
             auth_header = headers.get(b'authorization', b'').decode()
             if auth_header.startswith('Bearer '):
                 token = auth_header[7:]
+        
+        # 3. If still no token, try to get from cookies
+        if not token:
+            headers = dict(scope.get('headers', []))
+            cookies = headers.get(b'cookie', b'').decode()
+            # Parse cookies
+            cookie_dict = {}
+            for cookie in cookies.split(';'):
+                if '=' in cookie:
+                    key, value = cookie.strip().split('=', 1)
+                    cookie_dict[key] = value
+            token = cookie_dict.get('access_token')
         
         # Authenticate user
         if token:

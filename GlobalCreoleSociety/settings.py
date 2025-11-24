@@ -167,7 +167,7 @@ AUTH_USER_MODEL = 'accounts.User'
 # Django REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'accounts.authentication.CookieJWTAuthentication',  # Custom auth that checks both cookies and headers
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -239,8 +239,17 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
+# Cookie settings for JWT tokens
+JWT_COOKIE_SAMESITE = 'Lax'  # 'Lax', 'Strict', or 'None'
+JWT_COOKIE_SECURE = False  # Set to True in production with HTTPS
+JWT_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies for security
+JWT_COOKIE_DOMAIN = None  # Set specific domain if needed
+JWT_COOKIE_PATH = '/'
+
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True  # Required for cookie-based authentication
+
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
