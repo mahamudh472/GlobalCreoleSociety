@@ -101,8 +101,14 @@ Change Password:
 ```json
 {
   "old_password": "currentPassword",
-  "new_password": "newSecurePassword",
-  "code": "123456"
+  "new_password": "newSecurePassword"
+}
+```
+
+Response:
+```json
+{
+  "message": "Password updated successfully"
 }
 ```
 

@@ -2661,10 +2661,6 @@ components:
           type: string
           writeOnly: true
           minLength: 1
-        code:
-          type: string
-          writeOnly: true
-          minLength: 1
       required:
       - new_password
       - old_password
@@ -3626,10 +3622,6 @@ components:
           writeOnly: true
           minLength: 1
         new_password:
-          type: string
-          writeOnly: true
-          minLength: 1
-        code:
           type: string
           writeOnly: true
           minLength: 1

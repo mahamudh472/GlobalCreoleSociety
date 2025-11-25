@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User, Location, Work, Education, Friendship, ExtraEmail, ExtraPhoneNumber
-
+from django.db.models import Q
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,13 +70,16 @@ class UserSerializer(serializers.ModelSerializer):
     educations = EducationSerializer(many=True, read_only=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
     profile_image_url = serializers.SerializerMethodField()
+    post_count = serializers.IntegerField(source='posts.count', read_only=True)
+    friends_count = serializers.SerializerMethodField()
+    likes_count = serializers.IntegerField(source='post_likes.count', read_only=True)
 
     class Meta:
         model = User
         fields = ['id', 'email', 'profile_name', 'description', 'profile_image', 'profile_image_url',
                   'website', 'phone_number', 'gender', 'date_of_birth', 'profile_lock',
-                  'date_joined', 'locations', 'works', 'educations']
-        read_only_fields = ['id', 'date_joined', 'profile_image_url']
+                  'date_joined', 'locations', 'works', 'educations', 'post_count', 'friends_count', 'likes_count']
+        read_only_fields = ['id', 'date_joined', 'profile_image_url', 'post_count', 'friends_count', 'likes_count']
     
     def get_profile_image_url(self, obj):
         """Return absolute URL for profile image"""
@@ -95,11 +98,15 @@ class UserSerializer(serializers.ModelSerializer):
         representation['profile_image'] = representation.pop('profile_image_url', None)
         return representation
 
+    def get_friends_count(self, obj):
+        return Friendship.objects.filter(
+            (Q(receiver=obj) | Q(requester=obj)) & Q(status='accepted')
+        ).count()
+
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True, required=True)
     new_password = serializers.CharField(write_only=True, required=True)
-    code = serializers.CharField(write_only=True, required=False)
 
 class ChangeEmailSerializer(serializers.Serializer):
     new_email = serializers.EmailField(write_only=True, required=True)

@@ -187,11 +187,11 @@ class OtherUserProfileView(generics.RetrieveAPIView):
         user = self.get_object()
         
         # Check if profile is locked
-        if user.profile_lock and user != request.user:
-            return Response(
-                {"detail": "This profile is private."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # if user.profile_lock and user != request.user:
+        #     return Response(
+        #         {"detail": "This profile is private."},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
         
         serializer = self.get_serializer(user, context={'request': request})
         return Response(serializer.data)
@@ -214,15 +214,7 @@ class ChangePasswordView(generics.UpdateAPIView):
             if not self.object.check_password(serializer.validated_data.get("old_password")):
                 return Response({"old_password": ["Wrong password."]}, status=status.HTTP_400_BAD_REQUEST)
             
-            code = serializer.validated_data.get("code", None)
-            if code and OTP.objects.filter(user=self.object, code=code).exists():
-                otp_instance = OTP.objects.get(user=self.object, code=code)
-                if otp_instance.is_expired():
-                    return Response({"code": ["The code has expired."]}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                return Response({"code": ["Invalid code."]}, status=status.HTTP_400_BAD_REQUEST)
-            
-            otp_instance.delete()  # Invalidate OTP after use
+            # Set new password
             self.object.set_password(serializer.validated_data.get("new_password"))
             self.object.save()
             return Response({"message": "Password updated successfully"}, status=status.HTTP_200_OK)
