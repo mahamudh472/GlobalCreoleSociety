@@ -69,24 +69,21 @@ class UserSerializer(serializers.ModelSerializer):
     works = WorkSerializer(many=True, read_only=True)
     educations = EducationSerializer(many=True, read_only=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
-    profile_image_url = serializers.SerializerMethodField()
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
     friends_count = serializers.SerializerMethodField()
     likes_count = serializers.IntegerField(source='post_likes.count', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'profile_name', 'description', 'profile_image', 'profile_image_url',
+        fields = ['id', 'email', 'profile_name', 'description', 'profile_image',
                   'website', 'phone_number', 'gender', 'date_of_birth', 'profile_lock',
                   'date_joined', 'locations', 'works', 'educations', 'post_count', 'friends_count', 'likes_count']
-        read_only_fields = ['id', 'date_joined', 'profile_image_url', 'post_count', 'friends_count', 'likes_count']
+        read_only_fields = ['id', 'date_joined', 'post_count', 'friends_count', 'likes_count']
     
     
     def to_representation(self, instance):
         """Override to use profile_image_url as profile_image in response"""
         representation = super().to_representation(instance)
-        # Replace profile_image with the full URL
-        representation['profile_image'] = representation.pop('profile_image_url', None)
         return representation
 
     def get_friends_count(self, obj):
