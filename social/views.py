@@ -984,14 +984,15 @@ class NotificationMarkReadView(APIView):
     """Mark notification(s) as read"""
     permission_classes = [permissions.IsAuthenticated]
     
-    def post(self, request):
-        notification_ids = request.data.get('notification_ids', [])
-        
-        if notification_ids:
-            Notification.objects.filter(
-                id__in=notification_ids,
+    def post(self, request, pk=None):
+        if pk:
+            notification = get_object_or_404(
+                Notification,
+                id=pk,
                 recipient=request.user
-            ).update(is_read=True)
+            )
+            notification.is_read = True
+            notification.save()
         else:
             # Mark all as read
             Notification.objects.filter(

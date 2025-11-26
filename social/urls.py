@@ -60,6 +60,7 @@ urlpatterns = [
     
     # ============== Notifications ==============
     path('notifications/', NotificationListView.as_view(), name='notification-list'),
+    path('notifications/mark-read/<uuid:pk>/', NotificationMarkReadView.as_view(), name='notification-mark-read-single'),
     path('notifications/mark-read/', NotificationMarkReadView.as_view(), name='notification-mark-read'),
     
     # ============== User Blocking ==============
