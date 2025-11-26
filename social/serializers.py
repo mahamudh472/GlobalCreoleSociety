@@ -115,14 +115,18 @@ class PostSerializer(serializers.ModelSerializer):
     media = PostMediaSerializer(many=True, read_only=True)
     like_count = serializers.IntegerField(read_only=True)
     comment_count = serializers.IntegerField(read_only=True)
+    share_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     society = serializers.SerializerMethodField()
+    shared_post = serializers.SerializerMethodField()
+    is_shared = serializers.SerializerMethodField()
     
     class Meta:
         model = Post
         fields = [
             'id', 'user', 'content', 'privacy', 'society',
-            'media', 'like_count', 'comment_count', 'is_liked',
+            'media', 'like_count', 'comment_count', 'share_count', 'is_liked',
+            'shared_post', 'share_caption', 'is_shared',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'user', 'created_at', 'updated_at']
@@ -143,6 +147,32 @@ class PostSerializer(serializers.ModelSerializer):
                 'members_count': obj.society.member_count,
             }
         return None
+    
+    def get_share_count(self, obj):
+        """Get count of times this post has been shared"""
+        return obj.shares.count()
+    
+    def get_shared_post(self, obj):
+        """Return the original shared post if this is a share"""
+        if obj.shared_post:
+            # Prevent infinite recursion by excluding shared_post field in nested serialization
+            return {
+                'id': obj.shared_post.id,
+                'user': UserBasicSerializer(obj.shared_post.user, context=self.context).data,
+                'content': obj.shared_post.content,
+                'privacy': obj.shared_post.privacy,
+                'media': PostMediaSerializer(obj.shared_post.media.all(), many=True, context=self.context).data,
+                'like_count': obj.shared_post.like_count,
+                'comment_count': obj.shared_post.comment_count,
+                'share_count': obj.shared_post.shares.count(),
+                'created_at': obj.shared_post.created_at,
+                'updated_at': obj.shared_post.updated_at,
+            }
+        return None
+    
+    def get_is_shared(self, obj):
+        """Check if this post is a shared post"""
+        return obj.shared_post is not None
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
@@ -198,6 +228,179 @@ class PostCreateSerializer(serializers.ModelSerializer):
             )
         
         return post
+
+
+class PostShareSerializer(serializers.Serializer):
+    """Serializer for sharing a post"""
+    post_id = serializers.UUIDField(required=True, help_text="ID of the post to share")
+    share_caption = serializers.CharField(
+        required=False, 
+        allow_blank=True, 
+        help_text="Optional caption for the shared post"
+    )
+    privacy = serializers.ChoiceField(
+        choices=Post.PRIVACY_CHOICES,
+        default='public',
+        help_text="Privacy setting for the shared post"
+    )
+    society = serializers.UUIDField(
+        required=False,
+        allow_null=True,
+        help_text="Optional society to share the post in"
+    )
+    
+    def validate_post_id(self, value):
+        """Validate that the post exists and can be shared"""
+        try:
+            post = Post.objects.get(id=value)
+        except Post.DoesNotExist:
+            raise serializers.ValidationError("Post not found.")
+        
+        # Check if post is already a shared post (prevent recursive sharing)
+        if post.shared_post:
+            raise serializers.ValidationError("You cannot share a post that is already a share. Share the original post instead.")
+        
+        return value
+    
+    def validate_society(self, value):
+        """Validate society membership if sharing to a society"""
+        if value:
+            request = self.context.get('request')
+            if not SocietyMembership.objects.filter(
+                user=request.user,
+                society_id=value,
+                status='accepted'
+            ).exists():
+                raise serializers.ValidationError("You must be a member of this society to share posts there.")
+        return value
+    
+    def validate(self, data):
+        """Additional validation"""
+        request = self.context.get('request')
+        post_id = data.get('post_id')
+        
+        # Check if user already shared this post
+        if Post.objects.filter(user=request.user, shared_post_id=post_id).exists():
+            raise serializers.ValidationError("You have already shared this post.")
+        
+        # Get the post and check view permissions
+        post = Post.objects.get(id=post_id)
+        from .permissions import PostPermissions
+        if not PostPermissions.can_view_post(request.user, post):
+            raise serializers.ValidationError("You don't have permission to share this post.")
+        
+        return data
+
+
+class BulkPostShareSerializer(serializers.Serializer):
+    """Serializer for sharing a post to multiple users and societies"""
+    post_id = serializers.UUIDField(required=True, help_text="ID of the post to share")
+    user_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        default=list,
+        help_text="List of user IDs to send the post link via message"
+    )
+    society_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        default=list,
+        help_text="List of society IDs to share the post in"
+    )
+    share_caption = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Optional caption for the shared posts in societies"
+    )
+    message_text = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Optional message text to send with the post link to users"
+    )
+    
+    def validate_post_id(self, value):
+        """Validate that the post exists and can be shared"""
+        try:
+            post = Post.objects.get(id=value)
+        except Post.DoesNotExist:
+            raise serializers.ValidationError("Post not found.")
+        
+        # Check if post is already a shared post (prevent recursive sharing)
+        if post.shared_post:
+            raise serializers.ValidationError("You cannot share a post that is already a share. Share the original post instead.")
+        
+        return value
+    
+    def validate_user_ids(self, value):
+        """Validate that all user IDs exist"""
+        if value:
+            existing_users = User.objects.filter(id__in=value).values_list('id', flat=True)
+            existing_users_set = set(str(uid) for uid in existing_users)
+            provided_users_set = set(str(uid) for uid in value)
+            
+            missing_users = provided_users_set - existing_users_set
+            if missing_users:
+                raise serializers.ValidationError(
+                    f"The following user IDs do not exist: {', '.join(missing_users)}"
+                )
+        return value
+    
+    def validate_society_ids(self, value):
+        """Validate society IDs and membership"""
+        if value:
+            request = self.context.get('request')
+            
+            # Check if all societies exist
+            existing_societies = Society.objects.filter(id__in=value).values_list('id', flat=True)
+            existing_societies_set = set(str(sid) for sid in existing_societies)
+            provided_societies_set = set(str(sid) for sid in value)
+            
+            missing_societies = provided_societies_set - existing_societies_set
+            if missing_societies:
+                raise serializers.ValidationError(
+                    f"The following society IDs do not exist: {', '.join(missing_societies)}"
+                )
+            
+            # Check if user is a member of all societies
+            user_societies = SocietyMembership.objects.filter(
+                user=request.user,
+                society_id__in=value,
+                status='accepted'
+            ).values_list('society_id', flat=True)
+            user_societies_set = set(str(sid) for sid in user_societies)
+            
+            non_member_societies = provided_societies_set - user_societies_set
+            if non_member_societies:
+                raise serializers.ValidationError(
+                    f"You are not a member of the following societies: {', '.join(non_member_societies)}"
+                )
+        
+        return value
+    
+    def validate(self, data):
+        """Additional validation"""
+        request = self.context.get('request')
+        post_id = data.get('post_id')
+        user_ids = data.get('user_ids', [])
+        society_ids = data.get('society_ids', [])
+        
+        # At least one of user_ids or society_ids must be provided
+        if not user_ids and not society_ids:
+            raise serializers.ValidationError(
+                "You must provide at least one user_id or society_id to share the post."
+            )
+        
+        # Get the post and check view permissions
+        post = Post.objects.get(id=post_id)
+        from .permissions import PostPermissions
+        if not PostPermissions.can_view_post(request.user, post):
+            raise serializers.ValidationError("You don't have permission to share this post.")
+        
+        # Check if user is trying to send to themselves
+        if str(request.user.id) in [str(uid) for uid in user_ids]:
+            raise serializers.ValidationError("You cannot send the post link to yourself.")
+        
+        return data
 
 
 # ============== Society Serializers ==============

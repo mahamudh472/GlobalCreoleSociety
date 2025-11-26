@@ -25,6 +25,10 @@ class Post(models.Model):
     privacy = models.CharField(max_length=20, choices=PRIVACY_CHOICES, default='public')
     society = models.ForeignKey('Society', on_delete=models.CASCADE, related_name='posts', null=True, blank=True)
     
+    # Sharing functionality
+    shared_post = models.ForeignKey('self', on_delete=models.CASCADE, related_name='shares', null=True, blank=True)
+    share_caption = models.TextField(blank=True, help_text='Caption added when sharing a post')
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -45,6 +49,14 @@ class Post(models.Model):
     @property
     def comment_count(self):
         return self.comments.count()
+    
+    @property
+    def share_count(self):
+        return self.shares.count()
+    
+    def is_shared(self):
+        """Check if this post is a shared post"""
+        return self.shared_post is not None
 
 
 class PostMedia(models.Model):
@@ -313,6 +325,7 @@ class Notification(models.Model):
         ('friend_accept', 'Friend Accept'),
         ('post_like', 'Post Like'),
         ('post_comment', 'Post Comment'),
+        ('post_share', 'Post Share'),
         ('comment_like', 'Comment Like'),
         ('society_invite', 'Society Invite'),
         ('society_join', 'Society Join Request'),

@@ -5,7 +5,7 @@ from .views import (
     FriendListView, UnfriendView, FriendSuggestionsView,
     
     # Post views
-    PostCreateView, PostListView, PostDetailView, PostLikeView,
+    PostCreateView, PostListView, PostDetailView, PostLikeView, PostShareView, BulkPostShareView,
     PostCommentListView, CommentDetailView, CommentLikeView,
     
     # Society views
@@ -34,6 +34,8 @@ urlpatterns = [
     # ============== Posts ==============
     path('posts/', PostListView.as_view(), name='post-list'),
     path('posts/create/', PostCreateView.as_view(), name='post-create'),
+    path('posts/share/', PostShareView.as_view(), name='post-share'),
+    path('posts/share-bulk/', BulkPostShareView.as_view(), name='post-share-bulk'),
     path('posts/<uuid:pk>/', PostDetailView.as_view(), name='post-detail'),
     path('posts/<uuid:pk>/like/', PostLikeView.as_view(), name='post-like'),
     path('posts/<uuid:pk>/comments/', PostCommentListView.as_view(), name='post-comments'),

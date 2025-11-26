@@ -14,7 +14,7 @@ from .models import (
 )
 from accounts.models import Friendship, User
 from .serializers import (
-    PostSerializer, PostCreateSerializer, CommentSerializer,
+    PostSerializer, PostCreateSerializer, PostShareSerializer, BulkPostShareSerializer, CommentSerializer,
     FriendshipSerializer, FriendRequestSerializer,
     SocietySerializer, SocietyMembershipSerializer,
     StorySerializer, StoryCreateSerializer,
@@ -354,6 +354,206 @@ class PostLikeView(APIView):
                 {"message": "Post liked", "liked": True},
                 status=status.HTTP_201_CREATED
             )
+
+
+class PostShareView(APIView):
+    """Share a post with an optional caption"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = PostShareSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            post_id = serializer.validated_data['post_id']
+            share_caption = serializer.validated_data.get('share_caption', '')
+            privacy = serializer.validated_data.get('privacy', 'public')
+            society_id = serializer.validated_data.get('society', None)
+            
+            # Get the original post
+            original_post = Post.objects.get(id=post_id)
+            
+            # Create the shared post
+            shared_post = Post.objects.create(
+                user=request.user,
+                shared_post=original_post,
+                share_caption=share_caption,
+                privacy=privacy,
+                society_id=society_id
+            )
+            
+            # Create notification for the original post owner
+            if original_post.user != request.user:
+                Notification.objects.create(
+                    recipient=original_post.user,
+                    sender=request.user,
+                    notification_type='post_share',
+                    post=original_post,
+                    message=f"{request.user.profile_name} shared your post"
+                )
+            
+            # Refresh the shared post with related data
+            shared_post = Post.objects.select_related(
+                'user', 'society', 'shared_post', 'shared_post__user'
+            ).prefetch_related(
+                'media', 'likes', 'comments', 'shared_post__media'
+            ).get(pk=shared_post.pk)
+            
+            # Return the full shared post data
+            post_data = PostSerializer(shared_post, context={'request': request}).data
+            return Response(post_data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BulkPostShareView(APIView):
+    """Share a post to multiple users (via messages) and multiple societies"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        serializer = BulkPostShareSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            post_id = serializer.validated_data['post_id']
+            user_ids = serializer.validated_data.get('user_ids', [])
+            society_ids = serializer.validated_data.get('society_ids', [])
+            share_caption = serializer.validated_data.get('share_caption', '')
+            message_text = serializer.validated_data.get('message_text', '')
+            
+            # Get the original post
+            original_post = Post.objects.get(id=post_id)
+            
+            # Build the post link (you may need to adjust the base URL)
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+            post_link = f"{base_url}/posts/{original_post.id}/"
+            
+            results = {
+                'messages_sent': [],
+                'societies_shared': [],
+                'errors': []
+            }
+            
+            # Send messages to users with post link
+            if user_ids:
+                from chat.models import Conversation, Message
+                
+                for user_id in user_ids:
+                    try:
+                        recipient = User.objects.get(id=user_id)
+                        
+                        # Check if conversation already exists
+                        conversation = Conversation.objects.filter(
+                            participants=request.user
+                        ).filter(
+                            participants=recipient
+                        ).first()
+                        
+                        # Create conversation if it doesn't exist
+                        if not conversation:
+                            conversation = Conversation.objects.create()
+                            conversation.participants.add(request.user, recipient)
+                        
+                        # Create message with post link
+                        message_content = message_text if message_text else "Check out this post:"
+                        message_content += f"\n\n{post_link}"
+                        
+                        message = Message.objects.create(
+                            conversation=conversation,
+                            sender=request.user,
+                            content=message_content
+                        )
+                        
+                        # Update conversation's last_message
+                        conversation.last_message = message
+                        conversation.save(update_fields=['last_message', 'updated_at'])
+                        
+                        results['messages_sent'].append({
+                            'user_id': str(user_id),
+                            'user_name': recipient.profile_name,
+                            'conversation_id': str(conversation.id),
+                            'message_id': str(message.id)
+                        })
+                        
+                    except User.DoesNotExist:
+                        results['errors'].append({
+                            'user_id': str(user_id),
+                            'error': 'User not found'
+                        })
+                    except Exception as e:
+                        results['errors'].append({
+                            'user_id': str(user_id),
+                            'error': str(e)
+                        })
+            
+            # Share post in societies
+            if society_ids:
+                for society_id in society_ids:
+                    try:
+                        society = Society.objects.get(id=society_id)
+                        
+                        # Check if already shared in this society
+                        existing_share = Post.objects.filter(
+                            user=request.user,
+                            shared_post=original_post,
+                            society=society
+                        ).first()
+                        
+                        if existing_share:
+                            results['errors'].append({
+                                'society_id': str(society_id),
+                                'society_name': society.name,
+                                'error': 'Post already shared in this society'
+                            })
+                            continue
+                        
+                        # Create shared post in society
+                        shared_post = Post.objects.create(
+                            user=request.user,
+                            shared_post=original_post,
+                            share_caption=share_caption,
+                            privacy='public',  # Society posts are public within the society
+                            society=society
+                        )
+                        
+                        results['societies_shared'].append({
+                            'society_id': str(society_id),
+                            'society_name': society.name,
+                            'shared_post_id': str(shared_post.id)
+                        })
+                        
+                    except Society.DoesNotExist:
+                        results['errors'].append({
+                            'society_id': str(society_id),
+                            'error': 'Society not found'
+                        })
+                    except Exception as e:
+                        results['errors'].append({
+                            'society_id': str(society_id),
+                            'error': str(e)
+                        })
+            
+            # Create notification for the original post owner if any shares were successful
+            if (results['messages_sent'] or results['societies_shared']) and original_post.user != request.user:
+                Notification.objects.create(
+                    recipient=original_post.user,
+                    sender=request.user,
+                    notification_type='post_share',
+                    post=original_post,
+                    message=f"{request.user.profile_name} shared your post"
+                )
+            
+            # Determine response status
+            if results['errors'] and not (results['messages_sent'] or results['societies_shared']):
+                # All operations failed
+                return Response(results, status=status.HTTP_400_BAD_REQUEST)
+            elif results['errors']:
+                # Partial success
+                return Response(results, status=status.HTTP_207_MULTI_STATUS)
+            else:
+                # Complete success
+                return Response(results, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PostCommentListView(generics.ListCreateAPIView):
