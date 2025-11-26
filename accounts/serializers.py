@@ -81,15 +81,6 @@ class UserSerializer(serializers.ModelSerializer):
                   'date_joined', 'locations', 'works', 'educations', 'post_count', 'friends_count', 'likes_count']
         read_only_fields = ['id', 'date_joined', 'profile_image_url', 'post_count', 'friends_count', 'likes_count']
     
-    def get_profile_image_url(self, obj):
-        """Return absolute URL for profile image"""
-        if obj.profile_image and hasattr(obj.profile_image, 'url'):
-            request = self.context.get('request')
-            if request is not None:
-                return request.build_absolute_uri(obj.profile_image.url)
-            # Fallback to BASE_URL when request is not available
-            return f"{settings.BASE_URL}{obj.profile_image.url}"
-        return None
     
     def to_representation(self, instance):
         """Override to use profile_image_url as profile_image in response"""
@@ -103,6 +94,11 @@ class UserSerializer(serializers.ModelSerializer):
             (Q(receiver=obj) | Q(requester=obj)) & Q(status='accepted')
         ).count()
 
+class UserSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'profile_name', 'profile_image', 'profile_lock']
+    
 
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(write_only=True, required=True)

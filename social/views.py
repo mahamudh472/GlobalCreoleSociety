@@ -218,8 +218,8 @@ class FriendSuggestionsView(APIView):
         ).order_by('-last_login')[:20]  # Limit to 20 suggestions
         
         # Serialize user data
-        from accounts.serializers import UserSerializer
-        serializer = UserSerializer(suggested_users, many=True)
+        from accounts.serializers import UserSimpleSerializer
+        serializer = UserSimpleSerializer(suggested_users, many=True, context={'request': request})
         
         return Response(serializer.data, status=status.HTTP_200_OK)
 

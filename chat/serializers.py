@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from django.conf import settings
 from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt
-from accounts.serializers import UserSerializer
+from accounts.serializers import UserSimpleSerializer
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
+    sender = UserSimpleSerializer(read_only=True)
     file_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -27,7 +27,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ConversationSerializer(serializers.ModelSerializer):
-    participants = UserSerializer(many=True, read_only=True)
+    participants = UserSimpleSerializer(many=True, read_only=True)
     last_message = MessageSerializer(read_only=True)
     unread_count = serializers.SerializerMethodField()
     other_participant = serializers.SerializerMethodField()
@@ -51,7 +51,7 @@ class ConversationSerializer(serializers.ModelSerializer):
         if request and request.user:
             other_user = obj.get_other_participant(request.user)
             if other_user:
-                return UserSerializer(other_user, context={'request': request}).data
+                return UserSimpleSerializer(other_user, context={'request': request}).data
         return None
 
 
@@ -80,12 +80,12 @@ class ConversationListSerializer(serializers.ModelSerializer):
         if request and request.user:
             other_user = obj.get_other_participant(request.user)
             if other_user:
-                return UserSerializer(other_user, context={'request': request}).data
+                return UserSimpleSerializer(other_user, context={'request': request}).data
         return None
 
 
 class GlobalChatMessageSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
+    sender = UserSimpleSerializer(read_only=True)
     file_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -107,7 +107,7 @@ class GlobalChatMessageSerializer(serializers.ModelSerializer):
 
 
 class MessageReadReceiptSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
+    user = UserSimpleSerializer(read_only=True)
 
     class Meta:
         model = MessageReadReceipt

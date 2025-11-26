@@ -91,7 +91,7 @@ class RegisterView(generics.CreateAPIView):
         refresh_token = str(refresh)
         
         response_data = {
-            'user': UserSerializer(user).data,
+            'user': UserSerializer(user, context={'request': request}).data,
             'tokens': {
                 'refresh': refresh_token,
                 'access': access_token,
@@ -123,7 +123,7 @@ class LoginView(APIView):
         refresh_token = str(refresh)
         
         response_data = {
-            'user': UserSerializer(user).data,
+            'user': UserSerializer(user, context={'request': request}).data,
             'tokens': {
                 'refresh': refresh_token,
                 'access': access_token,
