@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     # Friend request views
-    SendFriendRequestView, FriendRequestListView, FriendRequestResponseView,
+    ApproveMembershipRequestView, SendFriendRequestView, FriendRequestListView, FriendRequestResponseView,
     FriendListView, UnfriendView, FriendSuggestionsView,
     
     # Post views
@@ -11,6 +11,7 @@ from .views import (
     # Society views
     SocietyListView, SocietyCreateView, SocietyDetailView,
     SocietyJoinView, SocietyLeaveView, SocietyMemberListView, SocietyPostListView,
+    ApproveMembershipRequestView, RejectPostView, ApprovePostView, PendingPostsView, PendingMembershipRequestsView,
     
     # Story views
     StoryListView, StoryCreateView, StoryDetailView,
@@ -52,6 +53,12 @@ urlpatterns = [
     path('societies/<uuid:pk>/leave/', SocietyLeaveView.as_view(), name='society-leave'),
     path('societies/<uuid:pk>/members/', SocietyMemberListView.as_view(), name='society-members'),
     path('societies/<uuid:pk>/posts/', SocietyPostListView.as_view(), name='society-posts'),
+    path('societies/<uuid:society_pk>/memberships/<int:membership_pk>/approve/', ApproveMembershipRequestView.as_view(), name='approve-membership-request'),
+    path('posts/<uuid:pk>/approve/', ApprovePostView.as_view(), name='approve-post'),
+    path('posts/<uuid:pk>/reject/', RejectPostView.as_view(), name='reject-post'),
+    path('societies/<uuid:pk>/pending-posts/', PendingPostsView.as_view(), name='pending-posts'),
+    path('societies/<uuid:pk>/pending-membership-requests/', PendingMembershipRequestsView.as_view(), name='pending-membership-requests'),
+
     
     # ============== Stories ==============
     path('stories/', StoryListView.as_view(), name='story-list'),

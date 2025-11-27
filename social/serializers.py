@@ -411,13 +411,14 @@ class SocietySerializer(serializers.ModelSerializer):
     user_membership = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
     cover_picture = serializers.ImageField(source='cover_image', read_only=True)
-    members_count = serializers.IntegerField(source='member_count', read_only=True)
+    media_count = serializers.SerializerMethodField()
+    post_count = serializers.IntegerField(source='posts.count', read_only=True)
     
     class Meta:
         model = Society
         fields = [
             'id', 'name', 'description', 'cover_image', 'cover_picture', 'privacy',
-            'creator', 'member_count', 'members_count', 'user_membership', 'is_member',
+            'creator', 'member_count', 'user_membership', 'is_member', 'media_count', 'post_count',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'creator', 'created_at', 'updated_at']
@@ -446,6 +447,10 @@ class SocietySerializer(serializers.ModelSerializer):
                 status='accepted'
             ).exists()
         return False
+    
+    def get_media_count(self, obj):
+        """Get count of media posts in the society"""
+        return PostMedia.objects.filter(post__society=obj).count()
 
 
 class SocietyMembershipSerializer(serializers.ModelSerializer):

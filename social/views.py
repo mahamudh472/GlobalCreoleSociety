@@ -1062,3 +1062,123 @@ class UnblockUserView(APIView):
             {"message": "User unblocked successfully"},
             status=status.HTTP_200_OK
         )
+
+
+class PendingMembershipRequestsView(generics.ListAPIView):
+    """List pending membership requests for a society"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SocietyMembershipSerializer
+    
+    def get_queryset(self):
+        society_id = self.kwargs['pk']
+        society = get_object_or_404(Society, id=society_id)
+        # Check if user can moderate
+        if not SocietyPermissions.can_moderate_society(self.request.user, society):
+            return SocietyMembership.objects.none()
+        return SocietyMembership.objects.filter(
+            society=society,
+            status='pending'
+        ).select_related('user')
+
+class PendingPostsView(generics.ListAPIView):
+    """List pending posts for moderation in a society"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+    
+    def get_queryset(self):
+        society_id = self.kwargs['pk']
+        society = get_object_or_404(Society, id=society_id)
+        # Check if user can moderate
+        if not SocietyPermissions.can_moderate_society(self.request.user, society):
+            return Post.objects.none()
+        return Post.objects.filter(society=society, status='pending')
+
+class ApprovePostView(APIView):
+    """Approve a pending post in a society"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, pk):
+        post = get_object_or_404(Post, id=pk)
+        society = post.society
+        # Check if user can moderate
+        if not SocietyPermissions.can_moderate_society(request.user, society):
+            return Response(
+                {"error": "You don't have permission to moderate this society"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        if post.status != 'pending':
+            return Response(
+                {"error": "Post is not pending approval"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        post.status = 'approved'
+        post.save()
+        return Response(
+            {"message": "Post approved successfully"},
+            status=status.HTTP_200_OK
+        )
+
+class RejectPostView(APIView):
+    """Reject a pending post in a society"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, pk):
+        post = get_object_or_404(Post, id=pk)
+        society = post.society
+        # Check if user can moderate
+        if not SocietyPermissions.can_moderate_society(request.user, society):
+            return Response(
+                {"error": "You don't have permission to moderate this society"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        if post.status != 'pending':
+            return Response(
+                {"error": "Post is not pending approval"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        post.status = 'rejected'
+        post.save()
+        return Response(
+            {"message": "Post rejected successfully"},
+            status=status.HTTP_200_OK
+        )
+
+
+class ApproveMembershipRequestView(APIView):
+    """Approve a pending membership request"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request, society_pk, membership_pk):
+        society = get_object_or_404(Society, id=society_pk)
+        membership = get_object_or_404(SocietyMembership, id=membership_pk, society=society)
+        
+        # Check if user can moderate
+        if not SocietyPermissions.can_moderate_society(request.user, society):
+            return Response(
+                {"error": "You don't have permission to moderate this society"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        if membership.status != 'pending':
+            return Response(
+                {"error": "Membership request is not pending"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        membership.status = 'accepted'
+        membership.save()
+        
+        # Notify user
+        Notification.objects.create(
+            recipient=membership.user,
+            sender=request.user,
+            notification_type='society_join_approved',
+            society=society,
+            message=f"Your request to join {society.name} has been approved"
+        )
+        
+        return Response(
+            {"message": "Membership request approved successfully"},
+            status=status.HTTP_200_OK
+        )
+    
