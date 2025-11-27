@@ -28,6 +28,8 @@ class Post(models.Model):
     # Sharing functionality
     shared_post = models.ForeignKey('self', on_delete=models.CASCADE, related_name='shares', null=True, blank=True)
     share_caption = models.TextField(blank=True, help_text='Caption added when sharing a post')
+
+    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='approved')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
