@@ -21,20 +21,12 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductImageSerializer(serializers.ModelSerializer):
     """Serializer for ProductImage model"""
-    image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductImage
-        fields = ['id', 'image', 'image_url', 'is_primary', 'created_at']
+        fields = ['id', 'image', 'is_primary', 'created_at']
         read_only_fields = ['created_at']
 
-    def get_image_url(self, obj):
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return None
 
 
 class ProductListSerializer(serializers.ModelSerializer):
