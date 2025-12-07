@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt
+from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt, Call
 
 
 @admin.register(Conversation)
@@ -42,3 +42,14 @@ class MessageReadReceiptAdmin(admin.ModelAdmin):
     list_display = ['id', 'user', 'conversation', 'last_read_at']
     list_filter = ['last_read_at']
     search_fields = ['user__profile_name']
+
+
+@admin.register(Call)
+class CallAdmin(admin.ModelAdmin):
+    list_display = ['id', 'caller', 'receiver', 'call_type', 'status', 'duration', 'started_at', 'ended_at']
+    list_filter = ['call_type', 'status', 'started_at']
+    search_fields = ['caller__profile_name', 'receiver__profile_name']
+    readonly_fields = ['started_at', 'answered_at', 'ended_at', 'duration']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('caller', 'receiver', 'conversation')

@@ -13,11 +13,11 @@ import os
 import magic
 import uuid
 
-from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt
+from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt, Call
 from .serializers import (
     ConversationSerializer, ConversationListSerializer,
     MessageSerializer, GlobalChatMessageSerializer,
-    MessageReadReceiptSerializer
+    MessageReadReceiptSerializer, CallSerializer
 )
 
 User = get_user_model()
@@ -484,3 +484,73 @@ class GlobalChatViewSet(viewsets.ReadOnlyModelViewSet):
         
         serializer = self.get_serializer(message, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class CallViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for managing calls
+    Real-time call signaling happens through WebSocket
+    This API is for call history
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = CallSerializer
+    
+    def get_queryset(self):
+        """
+        Get calls for the authenticated user (either as caller or receiver)
+        """
+        return Call.objects.filter(
+            Q(caller=self.user) | Q(receiver=self.user)
+        ).select_related('caller', 'receiver', 'conversation').order_by('-started_at')
+    
+    @action(detail=False, methods=['get'])
+    def conversation_calls(self, request):
+        """
+        Get call history for a specific conversation
+        """
+        conversation_id = request.query_params.get('conversation_id')
+        if not conversation_id:
+            return Response(
+                {'error': 'conversation_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user is participant in the conversation
+        conversation = get_object_or_404(Conversation, id=conversation_id)
+        if not conversation.participants.filter(id=request.user.id).exists():
+            return Response(
+                {'error': 'You are not a participant in this conversation'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        calls = Call.objects.filter(
+            conversation=conversation
+        ).select_related('caller', 'receiver').order_by('-started_at')
+        
+        serializer = self.get_serializer(calls, many=True, context={'request': request})
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def end_call(self, request, pk=None):
+        """
+        End an active call
+        """
+        call = self.get_object()
+        
+        # Check if user is participant in the call
+        if call.caller != request.user and call.receiver != request.user:
+            return Response(
+                {'error': 'You are not a participant in this call'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Check if call is already ended
+        if call.status in ['ended', 'rejected', 'missed']:
+            return Response(
+                {'error': 'Call is already ended'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        call.mark_ended()
+        serializer = self.get_serializer(call, context={'request': request})
+        return Response(serializer.data)

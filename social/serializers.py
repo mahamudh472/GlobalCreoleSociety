@@ -476,10 +476,22 @@ class SocietyMembershipSerializer(serializers.ModelSerializer):
 # ============== Story Serializers ==============
 
 class StoryMediaSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+    
     class Meta:
         model = StoryMedia
         fields = ['id', 'media_type', 'file', 'created_at']
         read_only_fields = ['id', 'created_at']
+    
+    def get_file(self, obj):
+        """Return absolute URL for file"""
+        if obj.file and hasattr(obj.file, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.file.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.file.url}"
+        return None
 
 
 class StorySerializer(serializers.ModelSerializer):

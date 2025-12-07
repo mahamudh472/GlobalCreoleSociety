@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+import uuid
 
 User = get_user_model()
 
@@ -117,27 +118,33 @@ class CartItem(models.Model):
 class Order(models.Model):
     """Order model"""
     STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('processing', 'Processing'),
-        ('shipped', 'Shipped'),
-        ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled'),
+        ('order_created', 'Order Created'),
+        ('payment_completed', 'Payment Completed'),
+        ('packed', 'Packed'),
+        ('sent', 'Sent'),
+        ('received', 'Received'),
     ]
-
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='order_created')
     
     # Shipping information
-    shipping_address = models.TextField()
-    shipping_city = models.CharField(max_length=100)
-    shipping_postal_code = models.CharField(max_length=20)
-    shipping_country = models.CharField(max_length=100)
-    shipping_phone = models.CharField(max_length=20)
+    # shipping_address = models.TextField()
+    # shipping_city = models.CharField(max_length=100)
+    # shipping_postal_code = models.CharField(max_length=20)
+    # shipping_country = models.CharField(max_length=100)
+    # shipping_phone = models.CharField(max_length=20)
+    delivery_type = models.CharField(max_length=100, choices=[('home', 'Home'), ('outlet', 'Outlet')], default='home')
+    payment_method = models.CharField(max_length=100, choices=[('stripe', 'Stripe'), ('cash_on_delivery', 'Cash on Delivery')], default='stripe')
     
     # Order tracking
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    payment_at = models.DateTimeField(null=True, blank=True)
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    recevied_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
 
     class Meta:
@@ -166,3 +173,14 @@ class OrderItem(models.Model):
         # Calculate subtotal
         self.subtotal = self.product_price * self.quantity
         super().save(*args, **kwargs)
+
+class DeliveryAddress(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='delivery_address')
+    receiver_name = models.CharField(max_length=255)
+    phone = models.CharField(max_length=20)
+    city = models.CharField(max_length=100)
+    address = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"Delivery Address for {self.user.username}"
+    

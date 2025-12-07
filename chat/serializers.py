@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.conf import settings
-from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt
+from .models import Conversation, Message, GlobalChatMessage, MessageReadReceipt, Call
 from accounts.serializers import UserSimpleSerializer
 
 
@@ -113,3 +113,25 @@ class MessageReadReceiptSerializer(serializers.ModelSerializer):
         model = MessageReadReceipt
         fields = ['id', 'user', 'conversation', 'last_read_message', 'last_read_at']
         read_only_fields = ['id', 'user', 'last_read_at']
+
+
+class CallSerializer(serializers.ModelSerializer):
+    caller = UserSimpleSerializer(read_only=True)
+    receiver = UserSimpleSerializer(read_only=True)
+    duration_formatted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Call
+        fields = [
+            'id', 'conversation', 'caller', 'receiver', 'call_type', 'status',
+            'started_at', 'answered_at', 'ended_at', 'duration', 'duration_formatted'
+        ]
+        read_only_fields = ['id', 'caller', 'started_at', 'answered_at', 'ended_at', 'duration']
+
+    def get_duration_formatted(self, obj):
+        """Format duration as MM:SS"""
+        if obj.duration:
+            minutes = obj.duration // 60
+            seconds = obj.duration % 60
+            return f"{minutes:02d}:{seconds:02d}"
+        return "00:00"
