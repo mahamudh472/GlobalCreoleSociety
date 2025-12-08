@@ -330,7 +330,7 @@ class GlobalChatConsumer(AsyncWebsocketConsumer):
         # Check if user is authenticated
         if not self.user.is_authenticated:
             print(f"[GLOBAL CHAT] Connection rejected: User not authenticated")
-            await self.close()
+            await self.close(code=4001)
             return
 
         print(f"[GLOBAL CHAT] User {self.user.profile_name} (ID: {self.user.id}) joining global chat")
@@ -363,14 +363,15 @@ class GlobalChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         # Notify others that user left
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'user_left',
-                'user_id': str(self.user.id),
-                'username': self.user.profile_name
-            }
-        )
+        if self.user.is_authenticated:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'user_left',
+                    'user_id': str(self.user.id),
+                    'username': self.user.profile_name
+                }
+            )
 
         # Leave global chat group
         await self.channel_layer.group_discard(
