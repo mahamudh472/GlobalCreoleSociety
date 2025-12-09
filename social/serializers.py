@@ -410,7 +410,6 @@ class SocietySerializer(serializers.ModelSerializer):
     member_count = serializers.IntegerField(read_only=True)
     user_membership = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
-    cover_picture = serializers.ImageField(source='cover_image', read_only=True)
     media_count = serializers.SerializerMethodField()
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
     pending_post_count = serializers.SerializerMethodField()
@@ -419,7 +418,7 @@ class SocietySerializer(serializers.ModelSerializer):
     class Meta:
         model = Society
         fields = [
-            'id', 'name', 'description', 'cover_image', 'cover_picture', 'privacy',
+            'id', 'name', 'description', 'cover_image', 'background_image', 'privacy',
             'creator', 'member_count', 'user_membership', 'is_member', 'media_count', 'post_count', 'pending_post_count', 'pending_membership_request_count',
             'created_at', 'updated_at'
         ]

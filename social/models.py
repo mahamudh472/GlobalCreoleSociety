@@ -245,6 +245,7 @@ class Society(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to='society_covers/', blank=True, null=True)
+    background_image = models.ImageField(upload_to='society_backgrounds/', blank=True, null=True)
     privacy = models.CharField(max_length=20, choices=PRIVACY_CHOICES, default='public')
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_societies')
     

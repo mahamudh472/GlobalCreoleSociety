@@ -44,6 +44,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     description = models.TextField(_("description"), blank=True)
     profile_image = models.ImageField(_("profile image"), upload_to="profile_images/", blank=True, null=True)
+    cover_photo = models.ImageField(_("cover photo"), upload_to="cover_photos/", blank=True, null=True)
     website = models.TextField(_("website"), blank=True)
     phone_number = models.CharField(_("phone number"), max_length=20, blank=True)
     gender = models.CharField(_("gender"), max_length=20, blank=True)

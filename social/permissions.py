@@ -263,7 +263,7 @@ def get_society_posts_queryset(user, society):
     
     # Get society posts
     posts = Post.objects.filter(
-        society=society
+        society=society, status='approved'
     ).exclude(
         user__in=blocked_users
     ).exclude(
