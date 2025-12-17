@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q, Prefetch, Count
 from django.utils import timezone
 
+from accounts.serializers import UserSimpleSerializer
+
 from .models import (
     Post, PostLike, Comment, CommentLike,
     Story, StoryView,
@@ -153,9 +155,11 @@ class FriendListView(generics.ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
+        query = self.request.query_params.get('search', '')
         return Friendship.objects.filter(
             Q(requester=user, status='accepted') |
-            Q(receiver=user, status='accepted')
+            Q(receiver=user, status='accepted') &
+            Q(requester__profile_name__icontains=query) 
         ).select_related('requester', 'receiver')
 
 
@@ -1004,6 +1008,29 @@ class NotificationMarkReadView(APIView):
             {"message": "Notifications marked as read"},
             status=status.HTTP_200_OK
         )
+    
+class DeleteNotificationView(APIView):
+    """Delete notification(s)"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def delete(self, request, pk=None):
+        if pk:
+            notification = get_object_or_404(
+                Notification,
+                id=pk,
+                recipient=request.user
+            )
+            notification.delete()
+        else:
+            # Delete all notifications
+            Notification.objects.filter(
+                recipient=request.user
+            ).delete()
+        
+        return Response(
+            {"message": "Notifications deleted"},
+            status=status.HTTP_200_OK
+        )
 
 
 # ============== User Blocking Views ==============
@@ -1062,6 +1089,16 @@ class UnblockUserView(APIView):
             {"message": "User unblocked successfully"},
             status=status.HTTP_200_OK
         )
+
+class BlockListView(generics.ListAPIView):
+    """List users blocked by the authenticated user"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSimpleSerializer
+
+    def get_queryset(self):
+        blocked_users = self.request.user.blocking.all().select_related('blocked').values_list('blocked', flat=True)
+        blocked_users = User.objects.filter(id__in=blocked_users)
+        return blocked_users
 
 
 class PendingMembershipRequestsView(generics.ListAPIView):

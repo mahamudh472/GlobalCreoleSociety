@@ -17,10 +17,10 @@ from .views import (
     StoryListView, StoryCreateView, StoryDetailView,
     
     # Notification views
-    NotificationListView, NotificationMarkReadView,
+    NotificationListView, NotificationMarkReadView, DeleteNotificationView,
     
     # User blocking views
-    BlockUserView, UnblockUserView,
+    BlockUserView, UnblockUserView, BlockListView,
 )
 
 urlpatterns = [
@@ -69,8 +69,10 @@ urlpatterns = [
     path('notifications/', NotificationListView.as_view(), name='notification-list'),
     path('notifications/mark-read/<uuid:pk>/', NotificationMarkReadView.as_view(), name='notification-mark-read-single'),
     path('notifications/mark-read/', NotificationMarkReadView.as_view(), name='notification-mark-read'),
+    path('notifications/delete/<uuid:pk>/', DeleteNotificationView.as_view(), name='notification-delete-single'),
     
     # ============== User Blocking ==============
     path('users/<uuid:pk>/block/', BlockUserView.as_view(), name='block-user'),
     path('users/<uuid:pk>/unblock/', UnblockUserView.as_view(), name='unblock-user'),
+    path('users/blocked/', BlockListView.as_view(), name='blocked-user-list'),
 ]
