@@ -143,7 +143,7 @@ class PostSerializer(serializers.ModelSerializer):
                 'id': obj.society.id,
                 'name': obj.society.name,
                 'cover_image': self.context.get('request').build_absolute_uri(obj.society.cover_image.url) if obj.society.cover_image else None,
-                'cover_picture': self.context.get('request').build_absolute_uri(obj.society.background_image.url) if obj.society.background_image else None,
+                'background_image': self.context.get('request').build_absolute_uri(obj.society.background_image.url) if obj.society.background_image else None,
                 'members_count': obj.society.member_count,
             }
         return None
