@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Education, Location, Work, Friendship
+from .models import User, Education, Location, Work, Friendship, SiteSetting
 
 
 class EducationInline(admin.StackedInline):
@@ -24,3 +24,9 @@ class FriendshipAdmin(admin.ModelAdmin):
     search_fields = ('requester__email', 'receiver__email')
     readonly_fields = ('created_at',)
 admin.site.register(Friendship, FriendshipAdmin)
+
+class SiteSettingAdmin(admin.ModelAdmin):
+    list_display = ('product_tax', 'shipping_cost')
+    search_fields = ('product_tax', 'shipping_cost')
+
+admin.site.register(SiteSetting, SiteSettingAdmin)

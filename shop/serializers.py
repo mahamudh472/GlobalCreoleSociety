@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, DeliveryAddress
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -261,3 +261,15 @@ class BuyNowSerializer(serializers.Serializer):
                 'quantity': f'Only {product.stock} items available in stock.'
             })
         return data
+    
+class DeliveryAddressSerializer(serializers.Serializer):
+    """Serializer for delivery address details"""
+    receiver_name = serializers.CharField(max_length=255)
+    phone = serializers.CharField(max_length=20)
+    city = serializers.CharField(max_length=100)
+    address = serializers.CharField()
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['user'] = user
+        return DeliveryAddress.objects.update_or_create(user=user, defaults=validated_data)

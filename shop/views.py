@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status, filters
+from rest_framework import viewsets, status, filters, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -7,9 +7,9 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, DeliveryAddress
 from .serializers import (
-    CategorySerializer, ProductListSerializer, ProductDetailSerializer,
+    CategorySerializer, DeliveryAddressSerializer, ProductListSerializer, ProductDetailSerializer,
     ProductApprovalSerializer, CartSerializer, CartItemSerializer,
     OrderSerializer, CheckoutSerializer, BuyNowSerializer, ProductImageSerializer
 )
@@ -519,4 +519,69 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
         order_serializer = OrderSerializer(order, context={'request': request})
         return Response(order_serializer.data, status=status.HTTP_201_CREATED)
 
+class CheckoutPreviewAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        """
+        Preview the total amount for checkout without creating an order.
+        """
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        cart_items = cart.items.select_related('product')
+        products = cart_items.values('product__name', "quantity")
+        
+
+
+        if not DeliveryAddress.objects.filter(user=request.user).exists():
+            deliver_address = None
+        else:
+            deliver_address = DeliveryAddressSerializer(DeliveryAddress.objects.get(user=request.user)).data
+
+        if not cart_items:
+            return Response(
+                {'error': 'Cart is empty'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        subtotal = sum(item.subtotal for item in cart_items)
+
+
+        from accounts.models import SiteSetting
+        site_setting = SiteSetting.get()
+        tax_amount = (site_setting.product_tax / 100) * subtotal
+        shipping_cost = site_setting.shipping_cost
+        total_amount = subtotal + tax_amount + shipping_cost
+
+        return Response({
+            # 'total_amount': total_amount,
+            'item_count': cart_items.count(),
+            'delivery_address': deliver_address,
+            'products': products,
+
+            'subtotal': subtotal,
+            'delivery_fee': 0,
+            'tax_amount': tax_amount,
+            'shipping_cost': shipping_cost,
+            'total_amount': total_amount,
+        })
+
+
+class DeliveryAddressAPIView(viewsets.ViewSet):
+    """
+    API View for handling delivery address details.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'], url_path='add-address')
+    def add_address(self, request):
+        """Add delivery address details"""
+        serializer = DeliveryAddressSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        
+        # Here you would typically save the address to the user's profile or a related model
+        # For demonstration, we'll just return the validated data
+        
+        return Response({
+            'message': 'Delivery address added successfully',
+        })

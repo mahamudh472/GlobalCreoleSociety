@@ -187,3 +187,16 @@ class ExtraPhoneNumber(models.Model):
 
     def __str__(self):
         return self.phone_number
+    
+class SiteSetting(models.Model):
+    product_tax = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @staticmethod
+    def get():
+        setting, created = SiteSetting.objects.get_or_create(id=1)
+        return setting
