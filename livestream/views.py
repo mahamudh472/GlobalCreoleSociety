@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.db.models import Q
 from .models import LiveStream, LiveStreamComment, LiveStreamView
 from .serializers import (
-    LiveStreamSerializer, LiveStreamCreateSerializer, 
+    LiveStreamSerializer, LiveStreamOwnerSerializer, LiveStreamCreateSerializer, 
     LiveStreamCommentSerializer, LiveStreamViewSerializer,
     LiveStreamListSerializer
 )
@@ -37,14 +37,56 @@ class LiveStreamViewSet(viewsets.ModelViewSet):
             return LiveStreamListSerializer
         return LiveStreamSerializer
     
+    def retrieve(self, request, *args, **kwargs):
+        """Override retrieve to return stream_key only to owner"""
+        instance = self.get_object()
+        # Use owner serializer if user is the owner
+        if request.user == instance.user:
+            serializer = LiveStreamOwnerSerializer(instance, context=self.get_serializer_context())
+        else:
+            serializer = LiveStreamSerializer(instance, context=self.get_serializer_context())
+        return Response(serializer.data)
+    
     def create(self, request, *args, **kwargs):
         """
         Create a new live stream and AWS IVS channel
+        Reuses existing channel if user has one that's not currently live
         """
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
         try:
+            # Check for existing channel that can be reused
+            # Look for a recent stream by this user that has channel info
+            existing_stream = LiveStream.objects.filter(
+                user=request.user,
+                channel_arn__isnull=False,
+                stream_key__isnull=False
+            ).exclude(
+                channel_arn='',
+                stream_key=''
+            ).order_by('-created_at').first()
+            
+            if existing_stream and existing_stream.channel_arn and existing_stream.stream_key:
+                # Reuse existing channel
+                logger.info(f"Reusing existing IVS channel for user {request.user.id}")
+                
+                # Create new livestream with existing channel info
+                livestream = LiveStream.objects.create(
+                    user=request.user,
+                    title=serializer.validated_data.get('title', ''),
+                    description=serializer.validated_data.get('description', ''),
+                    channel_arn=existing_stream.channel_arn,
+                    playback_url=existing_stream.playback_url,
+                    ingest_endpoint=existing_stream.ingest_endpoint,
+                    stream_key=existing_stream.stream_key,
+                    status='preparing'
+                )
+                
+                # Return the created stream with full details including stream_key for the owner
+                response_serializer = LiveStreamOwnerSerializer(livestream)
+                return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+            
             # Check if IVS is configured
             if not all([
                 hasattr(settings, 'AWS_ACCESS_KEY_ID'),
@@ -71,7 +113,9 @@ class LiveStreamViewSet(viewsets.ModelViewSet):
             else:
                 # Create IVS channel
                 ivs_service = IVSService()
-                channel_name = f"livestream-{request.user.id}-{timezone.now().timestamp()}"
+                # Use only alphanumeric, hyphens, and underscores for channel name
+                timestamp = str(int(timezone.now().timestamp()))
+                channel_name = f"livestream-{str(request.user.id).replace('-', '')[:12]}-{timestamp}"
                 
                 try:
                     channel_info = ivs_service.create_channel(channel_name)
@@ -103,8 +147,8 @@ class LiveStreamViewSet(viewsets.ModelViewSet):
                     status='preparing'
                 )
             
-            # Return the created stream with full details
-            response_serializer = LiveStreamSerializer(livestream)
+            # Return the created stream with full details including stream_key for the owner
+            response_serializer = LiveStreamOwnerSerializer(livestream)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
             
         except Exception as e:
@@ -130,6 +174,7 @@ class LiveStreamViewSet(viewsets.ModelViewSet):
         
         livestream.status = 'live'
         livestream.started_at = timezone.now()
+        livestream.viewer_count = 0  # Reset viewer count when starting
         livestream.save()
         
         serializer = self.get_serializer(livestream)
@@ -151,6 +196,7 @@ class LiveStreamViewSet(viewsets.ModelViewSet):
         
         livestream.status = 'ended'
         livestream.ended_at = timezone.now()
+        livestream.viewer_count = 0  # Reset viewer count when ending
         livestream.save()
         
         # Optionally stop the stream on AWS IVS
@@ -203,6 +249,19 @@ class LiveStreamViewSet(viewsets.ModelViewSet):
                 'status': livestream.status,
                 'error': str(e)
             })
+    
+    @action(detail=False, methods=['get'])
+    def active(self, request):
+        """
+        Get all currently live streams (public endpoint for feed)
+        Returns streams with status 'live' or 'preparing'
+        """
+        active_streams = LiveStream.objects.filter(
+            status__in=['live', 'preparing']
+        ).select_related('user').order_by('-created_at')
+        
+        serializer = LiveStreamListSerializer(active_streams, many=True)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def active(self, request):

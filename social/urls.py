@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     # Friend request views
     ApproveMembershipRequestView, SendFriendRequestView, FriendRequestListView, FriendRequestResponseView,
-    FriendListView, UnfriendView, FriendSuggestionsView,
+    FriendListView, UnfriendView, FriendSuggestionsView, FriendshipStatusView,
     
     # Post views
     PostCreateView, PostListView, PostDetailView, PostLikeView, PostShareView, BulkPostShareView,
@@ -31,6 +31,7 @@ urlpatterns = [
     path('friends/', FriendListView.as_view(), name='friend-list'),
     path('friends/<uuid:user_id>/unfriend/', UnfriendView.as_view(), name='unfriend'),
     path('friends/suggestions/', FriendSuggestionsView.as_view(), name='friend-suggestions'),
+    path('friends/status/<uuid:user_id>/', FriendshipStatusView.as_view(), name='friendship-status'),
     
     # ============== Posts ==============
     path('posts/', PostListView.as_view(), name='post-list'),

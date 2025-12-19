@@ -228,6 +228,76 @@ class FriendSuggestionsView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class FriendshipStatusView(APIView):
+    """Check friendship status with a specific user"""
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request, user_id):
+        user = request.user
+        
+        # Check if same user
+        if str(user.id) == str(user_id):
+            return Response({
+                'status': 'self',
+                'message': 'Cannot check friendship with yourself'
+            }, status=status.HTTP_200_OK)
+        
+        # Check if users are friends (accepted)
+        friendship = Friendship.objects.filter(
+            (Q(requester=user, receiver_id=user_id) | Q(requester_id=user_id, receiver=user)),
+            status='accepted'
+        ).first()
+        
+        if friendship:
+            return Response({
+                'status': 'friends',
+                'message': 'You are friends with this user'
+            }, status=status.HTTP_200_OK)
+        
+        # Check if current user sent a pending request
+        sent_request = Friendship.objects.filter(
+            requester=user,
+            receiver_id=user_id,
+            status='pending'
+        ).first()
+        
+        if sent_request:
+            return Response({
+                'status': 'request_sent',
+                'message': 'You have sent a friend request to this user'
+            }, status=status.HTTP_200_OK)
+        
+        # Check if current user received a pending request
+        received_request = Friendship.objects.filter(
+            requester_id=user_id,
+            receiver=user,
+            status='pending'
+        ).first()
+        
+        if received_request:
+            return Response({
+                'status': 'request_received',
+                'message': 'This user has sent you a friend request'
+            }, status=status.HTTP_200_OK)
+        
+        # Check if blocked
+        is_blocked = UserBlock.objects.filter(
+            Q(blocker=user, blocked_id=user_id) | Q(blocker_id=user_id, blocked=user)
+        ).exists()
+        
+        if is_blocked:
+            return Response({
+                'status': 'blocked',
+                'message': 'User is blocked'
+            }, status=status.HTTP_200_OK)
+        
+        # No relationship
+        return Response({
+            'status': 'none',
+            'message': 'No friendship relationship exists'
+        }, status=status.HTTP_200_OK)
+
+
 # ============== Post Views ==============
 
 class PostCreateView(generics.CreateAPIView):

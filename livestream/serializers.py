@@ -4,6 +4,25 @@ from accounts.serializers import UserSerializer
 
 
 class LiveStreamSerializer(serializers.ModelSerializer):
+    """Serializer for viewers - does NOT include stream_key"""
+    user = UserSerializer(read_only=True)
+    viewer_count = serializers.IntegerField(read_only=True)
+    peak_viewers = serializers.IntegerField(read_only=True)
+    
+    class Meta:
+        model = LiveStream
+        fields = [
+            'id', 'user', 'title', 'description', 'channel_arn', 
+            'ingest_endpoint', 'playback_url', 'status',
+            'started_at', 'ended_at', 'created_at', 'updated_at',
+            'viewer_count', 'peak_viewers'
+        ]
+        read_only_fields = ['id', 'user', 'channel_arn', 'ingest_endpoint', 
+                            'playback_url', 'created_at', 'updated_at']
+
+
+class LiveStreamOwnerSerializer(serializers.ModelSerializer):
+    """Serializer for owner/broadcaster - includes stream_key for broadcasting"""
     user = UserSerializer(read_only=True)
     viewer_count = serializers.IntegerField(read_only=True)
     peak_viewers = serializers.IntegerField(read_only=True)
@@ -18,9 +37,6 @@ class LiveStreamSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'user', 'channel_arn', 'ingest_endpoint', 
                             'playback_url', 'created_at', 'updated_at']
-        extra_kwargs = {
-            'stream_key': {'write_only': True}  # Don't expose stream key in responses
-        }
 
 
 class LiveStreamCreateSerializer(serializers.ModelSerializer):
@@ -54,6 +70,6 @@ class LiveStreamListSerializer(serializers.ModelSerializer):
     class Meta:
         model = LiveStream
         fields = [
-            'id', 'user', 'title', 'description', 'status',
+            'id', 'user', 'title', 'description', 'status', 'playback_url',
             'started_at', 'created_at', 'viewer_count', 'peak_viewers'
         ]

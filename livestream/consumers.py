@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from .models import LiveStream, LiveStreamComment
 import logging
+from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -20,6 +21,8 @@ class LiveStreamConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.livestream_id = self.scope['url_route']['kwargs']['livestream_id']
         self.room_group_name = f'livestream_{self.livestream_id}'
+        self.is_streamer = False  # Will be set when user identifies themselves
+        self.is_counted = False   # Track if this connection has been counted
         
         # Join room group
         await self.channel_layer.group_add(
@@ -29,10 +32,7 @@ class LiveStreamConsumer(AsyncWebsocketConsumer):
         
         await self.accept()
         
-        # Update viewer count
-        await self.update_viewer_count(1)
-        
-        # Send current viewer count to user
+        # Send current viewer count to the new user (don't increment yet)
         viewer_count = await self.get_viewer_count()
         await self.send(text_data=json.dumps({
             'type': 'viewer_count',
@@ -40,14 +40,24 @@ class LiveStreamConsumer(AsyncWebsocketConsumer):
         }))
     
     async def disconnect(self, close_code):
+        # Only decrement if this connection was counted
+        if self.is_counted:
+            viewer_count = await self.update_viewer_count(-1)
+            
+            # Broadcast updated viewer count to remaining users
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'broadcast_viewer_count',
+                    'count': viewer_count
+                }
+            )
+        
         # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
-        
-        # Update viewer count
-        await self.update_viewer_count(-1)
     
     async def receive(self, text_data):
         """
@@ -61,6 +71,8 @@ class LiveStreamConsumer(AsyncWebsocketConsumer):
                 await self.handle_comment(data)
             elif message_type == 'like':
                 await self.handle_like(data)
+            elif message_type == 'identify':
+                await self.handle_identify(data)
             elif message_type == 'viewer_joined':
                 await self.handle_viewer_joined(data)
             
@@ -69,6 +81,34 @@ class LiveStreamConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'Failed to process message'
+            }))
+    
+    async def handle_identify(self, data):
+        """
+        Handle user identification - streamer or viewer
+        """
+        is_streamer = data.get('is_streamer', False)
+        self.is_streamer = is_streamer
+        
+        # Only count viewers, not streamers
+        if not is_streamer and not self.is_counted:
+            self.is_counted = True
+            viewer_count = await self.update_viewer_count(1)
+            
+            # Broadcast updated viewer count to all users
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'broadcast_viewer_count',
+                    'count': viewer_count
+                }
+            )
+        elif is_streamer:
+            # Streamer doesn't count but should get current viewer count
+            viewer_count = await self.get_viewer_count()
+            await self.send(text_data=json.dumps({
+                'type': 'viewer_count',
+                'count': viewer_count
             }))
     
     async def handle_comment(self, data):
@@ -180,14 +220,17 @@ class LiveStreamConsumer(AsyncWebsocketConsumer):
                 user=user,
                 comment=comment_text
             )
+            headers = dict(self.scope.get('headers', []))
+            host = headers.get(b'host', b'').decode('utf-8')
+            scheme = 'https' if self.scope.get('scheme') == 'https' else 'http'
             
             return {
                 'id': comment.id,
                 'user': {
                     'id': str(user.id),
-                    'username': user.username,
-                    'profile_name': getattr(user, 'profile_name', user.username),
-                    'profile_image': user.profile_image.url if hasattr(user, 'profile_image') and user.profile_image else None
+                    'email': user.email,
+                    'profile_name': getattr(user, 'profile_name', user.email.split('@')[0]),
+                    'profile_image': urljoin(f"{scheme}://{host}", user.profile_image.url) if hasattr(user, 'profile_image') and user.profile_image else None
                 },
                 'comment': comment.comment,
                 'created_at': comment.created_at.isoformat()
