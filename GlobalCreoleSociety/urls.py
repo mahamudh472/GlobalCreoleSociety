@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/social/', include('social.urls')),
     path('api/chat/', include('chat.urls')),
     path('api/shop/', include('shop.urls')),
+    path('api/livestream/', include('livestream.urls')),
     
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

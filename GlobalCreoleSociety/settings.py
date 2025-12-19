@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'social',
     'chat',
     'shop',
+    'livestream',
 
 ]
 
@@ -256,4 +257,16 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+
+# AWS IVS Configuration
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', '')
+AWS_REGION = os.getenv('AWS_REGION', 'us-west-2')
+
+# Optional: Pre-configured IVS channel (for single-channel setup)
+AWS_IVS_CHANNEL_ARN = os.getenv('AWS_IVS_CHANNEL_ARN', '')
+AWS_IVS_PLAYBACK_URL = os.getenv('AWS_IVS_PLAYBACK_URL', '')
+AWS_IVS_INGEST_ENDPOINT = os.getenv('AWS_IVS_INGEST_ENDPOINT', '')
+AWS_IVS_STREAM_KEY = os.getenv('AWS_IVS_STREAM_KEY', '')
+
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL")

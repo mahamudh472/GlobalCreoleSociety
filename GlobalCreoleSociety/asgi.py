@@ -19,15 +19,19 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'GlobalCreoleSociety.settings')
 django_asgi_app = get_asgi_application()
 
 # Import after Django setup
-from chat.routing import websocket_urlpatterns
+from chat.routing import websocket_urlpatterns as chat_websocket_urlpatterns
+from livestream.routing import websocket_urlpatterns as livestream_websocket_urlpatterns
 from chat.middleware import JWTAuthMiddlewareStack
+
+# Combine all websocket URL patterns
+all_websocket_urlpatterns = chat_websocket_urlpatterns + livestream_websocket_urlpatterns
 
 application = ProtocolTypeRouter({
     "http": django_asgi_app,
     "websocket": AllowedHostsOriginValidator(
         JWTAuthMiddlewareStack(
             URLRouter(
-                websocket_urlpatterns
+                all_websocket_urlpatterns
             )
         )
     ),
