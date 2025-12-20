@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status, filters, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -51,6 +51,12 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         
+        # Handle unauthenticated users - show only approved products
+        if not user.is_authenticated:
+            return Product.objects.filter(
+                status='approved'
+            ).select_related('category', 'seller').prefetch_related('images')
+        
         if user.is_staff:
             # Admin can see all products
             return Product.objects.all().select_related('category', 'seller').prefetch_related('images')
@@ -66,7 +72,10 @@ class ProductViewSet(viewsets.ModelViewSet):
         return ProductDetailSerializer
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
+        # Allow unauthenticated access for viewing products
+        if self.action in ['list', 'retrieve', 'suggested_products']:
+            return [AllowAny()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), IsProductOwner()]
         elif self.action in ['approve', 'reject']:
             return [IsAuthenticated(), CanApproveProduct()]
