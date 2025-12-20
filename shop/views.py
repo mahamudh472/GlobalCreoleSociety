@@ -17,7 +17,10 @@ from .permissions import (
     IsAdminOrReadOnly, IsProductOwner, CanApproveProduct,
     IsCartOwner, IsOrderOwnerOrAdmin
 )
+import stripe
+from django.conf import settings
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
 class CategoryViewSet(viewsets.ModelViewSet):
     """
@@ -594,3 +597,99 @@ class DeliveryAddressAPIView(viewsets.ViewSet):
         return Response({
             'message': 'Delivery address added successfully',
         })
+    
+
+class CreateStripeConnectedAccountAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Create a Stripe Connected Account for the authenticated user.
+        """
+        user = request.user
+
+        if hasattr(user, 'stripe_account_id') and user.stripe_account_id:
+            return Response(
+                {'error': 'Stripe Connected Account already exists for this user.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            account = stripe.Account.create(
+                type='express',
+                capabilities={
+                    'card_payments': {'requested': True},
+                    'transfers': {'requested': True},
+                },
+            )
+
+            # Save the Stripe account ID to the user's profile
+            user.stripe_account_id = account.id
+            user.save()
+            
+            refresh_url = request.build_absolute_uri('api/shop/stripe/create-connected-account/')
+            account_link = stripe.AccountLink.create(
+                account=account.id,
+                refresh_url=refresh_url,
+                return_url='https://10.10.13.99/marketplace/',
+                type='account_onboarding',
+            )
+
+            return Response({
+                'message': 'Stripe Connected Account created successfully.',
+                'stripe_account_id': account.id,
+                'account_link_url': account_link.url
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+class CreateCheckoutSessionAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Create a Stripe Checkout Session for the authenticated user.
+        """
+        user = request.user
+        unit_amount = 2000  # Amount in cents ($20.00)
+        platform_fee_amount = unit_amount * 0.02
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[
+                    {
+                        'price_data': {
+                            'currency': 'usd',
+                            'product_data': {
+                                'name': 'Sample Product',
+                            },
+                            'unit_amount': 2000,
+                        },
+                        'quantity': 1,
+                    },
+                ],
+                mode='payment',
+                payment_intent_data={
+                    'application_fee_amount': int(platform_fee_amount),
+                    'transfer_data': {
+                        'destination': 'acct_1SgYrsFbcyMVJb4e',
+                    },
+                },
+                success_url='http://10.10.13.99:8001/success',
+                cancel_url='http://10.10.13.99:8001/cancel',
+            )
+
+            return Response({
+                'checkout_session_id': checkout_session.id,
+                'checkout_url': checkout_session.url
+            }, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

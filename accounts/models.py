@@ -51,6 +51,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_of_birth = models.DateField(_("date of birth"), blank=True, null=True)
     share_data = models.BooleanField(_("share data"), default=False)
 
+    stripe_account_id = models.CharField(_("stripe account id"), max_length=255, blank=True, null=True)
+    is_onboarding_completed = models.BooleanField(_("is onboarded"), default=False)
+
 
     is_staff = models.BooleanField(
         _("staff status"),

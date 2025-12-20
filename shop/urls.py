@@ -1,6 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, ProductViewSet, CartViewSet, OrderViewSet, DeliveryAddressAPIView, CheckoutPreviewAPIView
+from .views import (
+    CategoryViewSet, ProductViewSet, CartViewSet, 
+    OrderViewSet, DeliveryAddressAPIView, CheckoutPreviewAPIView, 
+    CreateStripeConnectedAccountAPIView, CreateCheckoutSessionAPIView
+    )
+from .webhook import stripe_webhook
 
 router = DefaultRouter()
 router.register(r'categories', CategoryViewSet, basename='category')
@@ -14,4 +19,7 @@ app_name = 'shop'
 urlpatterns = [
     path('', include(router.urls)),
     path('checkout/preview/', CheckoutPreviewAPIView.as_view(), name='checkout-preview'),
+    path('checkout/create-session/', CreateCheckoutSessionAPIView.as_view(), name='create-checkout-session'),
+    path('stripe/create-connected-account/', CreateStripeConnectedAccountAPIView.as_view(), name='create-stripe-connected-account'),
+    path('webhook/stripe/', stripe_webhook, name='stripe-webhook'),
 ]
