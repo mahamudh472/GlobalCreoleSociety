@@ -420,6 +420,9 @@ class SocietySerializer(serializers.ModelSerializer):
     is_member = serializers.SerializerMethodField()
     media_count = serializers.SerializerMethodField()
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
+    profile_image = serializers.SerializerMethodField()
+    cover_image = serializers.SerializerMethodField()
+    background_image = serializers.SerializerMethodField()
     
     class Meta:
         model = Society
@@ -459,6 +462,36 @@ class SocietySerializer(serializers.ModelSerializer):
     def get_media_count(self, obj):
         """Get count of media posts in the society"""
         return PostMedia.objects.filter(post__society=obj).count()
+    
+    def get_profile_image(self, obj):
+        """Return absolute URL for profile image"""
+        if obj.profile_image and hasattr(obj.profile_image, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.profile_image.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.profile_image.url}"
+        return None
+    
+    def get_cover_image(self, obj):
+        """Return absolute URL for cover image"""
+        if obj.cover_image and hasattr(obj.cover_image, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.cover_image.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.cover_image.url}"
+        return None
+    
+    def get_background_image(self, obj):
+        """Return absolute URL for background image"""
+        if obj.background_image and hasattr(obj.background_image, 'url'):
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.background_image.url)
+            # Fallback to BASE_URL when request is not available
+            return f"{settings.BASE_URL}{obj.background_image.url}"
+        return None
 
 
 class SocietyMembershipSerializer(serializers.ModelSerializer):

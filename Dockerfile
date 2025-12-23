@@ -29,6 +29,9 @@ RUN mkdir -p media/chat_files media/post_media media/product_images media/profil
 # Collect static files (if needed)
 RUN python manage.py collectstatic --noinput --clear 2>/dev/null || true
 
+# Make migrations (if needed)
+RUN python manage.py makemigrations 2>/dev/null || true
+
 # Run migrations
 RUN python manage.py migrate --noinput 2>/dev/null || true
 

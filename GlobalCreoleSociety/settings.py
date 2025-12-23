@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'shop',
     'livestream',
 
+    'storages',
+
 ]
 
 MIDDLEWARE = [
@@ -112,8 +114,12 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 
@@ -154,10 +160,31 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-# Media files (User uploaded content)
-MEDIA_URL = '/media/'
+    # Media files (User uploaded content)
 MEDIA_ROOT = BASE_DIR / 'media'
 
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+
+
+AWS_STORAGE_BUCKET_NAME = 'globalcreolesociety-media'
+AWS_S3_REGION_NAME = 'us-east-1' 
+AWS_QUERYSTRING_AUTH = False
+# This tells Django to use your domain instead of s3.amazonaws.com
+AWS_S3_CUSTOM_DOMAIN = 'globalcreolesociety.com'
+
+# This tells Django to prepend "media" to all S3 paths
+# So your file in S3 will be: media/post_media/2025/...
+AWS_LOCATION = 'media'
+
+# Final Media URL construction
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

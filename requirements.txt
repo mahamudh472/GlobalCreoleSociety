@@ -16,6 +16,7 @@ Django==5.2.8
 django-cleanup==9.0.0
 django-cors-headers==4.9.0
 django-filter==25.2
+django-storages==1.14.6
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 drf-spectacular==0.28.0
@@ -28,6 +29,7 @@ jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 msgpack==1.1.2
 pillow==12.0.0
+psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.23
