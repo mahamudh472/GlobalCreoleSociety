@@ -87,10 +87,15 @@ class StoryViewAdmin(admin.ModelAdmin):
 
 @admin.register(Society)
 class SocietyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'creator', 'privacy', 'created_at', 'member_count')
+    list_display = ('name', 'creator', 'privacy', 'created_at', 'get_member_count')
     list_filter = ('privacy', 'created_at')
     search_fields = ('name', 'description', 'creator__email')
     date_hierarchy = 'created_at'
+    
+    def get_member_count(self, obj):
+        """Display member count in admin list"""
+        return obj.memberships.filter(status='accepted').count()
+    get_member_count.short_description = 'Members'
 
 
 @admin.register(SocietyMembership)

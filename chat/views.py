@@ -446,9 +446,25 @@ class GlobalChatViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """
         Get global chat messages ordered newest to oldest for reverse infinite scroll
-        Frontend will reverse to display oldest first
         """
         return GlobalChatMessage.objects.select_related('sender').order_by('-created_at')
+    
+    def list(self, request, *args, **kwargs):
+        """
+        List global chat messages with pagination
+        Messages are reversed within each page so oldest is first
+        """
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            # Reverse the results so oldest is first in each page (consistent with private chat)
+            data = list(reversed(serializer.data))
+            return self.get_paginated_response(data)
+        
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
     
     @action(detail=False, methods=['post'])
     def send_message(self, request):

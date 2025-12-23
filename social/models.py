@@ -244,6 +244,7 @@ class Society(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+    profile_image = models.ImageField(upload_to='society_profiles/', blank=True, null=True)
     cover_image = models.ImageField(upload_to='society_covers/', blank=True, null=True)
     background_image = models.ImageField(upload_to='society_backgrounds/', blank=True, null=True)
     privacy = models.CharField(max_length=20, choices=PRIVACY_CHOICES, default='public')
@@ -258,10 +259,6 @@ class Society(models.Model):
     
     def __str__(self):
         return self.name
-    
-    @property
-    def member_count(self):
-        return self.memberships.filter(status='accepted').count()
 
 
 class SocietyMembership(models.Model):

@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Prefetch, Count
+from django.db.models import Q, Prefetch, Count, Case, When
+from django.db import models
 from django.utils import timezone
 
 from accounts.serializers import UserSimpleSerializer
@@ -496,10 +497,9 @@ class BulkPostShareView(APIView):
             # Get the original post
             original_post = Post.objects.get(id=post_id)
             
-            # Build the post link (you may need to adjust the base URL)
-            from django.conf import settings
-            base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
-            post_link = f"{base_url}/posts/{original_post.id}/"
+            # Build the post link (absolute frontend URL)
+            frontend_url = request.META.get('HTTP_ORIGIN', 'https://globalcreolesociety.com')
+            post_link = f"{frontend_url}/feed?sharedPost={original_post.id}"
             
             results = {
                 'messages_sent': [],
@@ -776,22 +776,25 @@ class SocietyListView(generics.ListAPIView):
             status='accepted'
         ).values_list('society_id', flat=True)
         
+        # Base queryset with annotations
+        base_qs = Society.objects.select_related('creator').prefetch_related('memberships').annotate(
+            members_count=Count('memberships', filter=Q(memberships__status='accepted'))
+        )
+        
         # Filter based on query parameters
         if my_societies == 'true':
             # Return only societies user is a member of
-            return Society.objects.filter(
-                id__in=user_society_ids
-            ).select_related('creator').prefetch_related('memberships').distinct()
+            return base_qs.filter(id__in=user_society_ids).distinct()
         elif available == 'true':
             # Return only societies user is NOT a member of (available to join)
-            return Society.objects.filter(
+            return base_qs.filter(
                 Q(privacy='public') & ~Q(id__in=user_society_ids)
-            ).select_related('creator').prefetch_related('memberships').distinct()
+            ).distinct()
         else:
             # Default: Return both user's societies and public societies
-            return Society.objects.filter(
+            return base_qs.filter(
                 Q(id__in=user_society_ids) | Q(privacy='public')
-            ).select_related('creator').prefetch_related('memberships').distinct()
+            ).distinct()
 
 
 class SocietyCreateView(generics.CreateAPIView):
@@ -815,7 +818,13 @@ class SocietyDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View, update, or delete a society"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SocietySerializer
-    queryset = Society.objects.select_related('creator')
+    
+    def get_queryset(self):
+        return Society.objects.select_related('creator').annotate(
+            members_count=Count('memberships', filter=Q(memberships__status='accepted')),
+            pending_posts_count=Count('posts', filter=Q(posts__status='pending')),
+            pending_members_count=Count('memberships', filter=Q(memberships__status='pending'))
+        )
     
     def get_object(self):
         society = super().get_object()
@@ -1288,4 +1297,137 @@ class ApproveMembershipRequestView(APIView):
             {"message": "Membership request approved successfully"},
             status=status.HTTP_200_OK
         )
+
+
+class SocietyInvitableFriendsView(generics.ListAPIView):
+    """List friends who are not members of the society (invitable friends)"""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSimpleSerializer
+
+    def get_queryset(self):
+        society_id = self.kwargs['pk']
+        society = get_object_or_404(Society, id=society_id)
+        user = self.request.user
+        
+        # Get all friends of current user (accepted friendships)
+        friend_ids = Friendship.objects.filter(
+            Q(requester=user, status='accepted') |
+            Q(receiver=user, status='accepted')
+        ).values_list(
+            Case(
+                When(requester=user, then='receiver_id'),
+                default='requester_id',
+                output_field=models.UUIDField()
+            ),
+            flat=True
+        )
+        
+        # Get society member user IDs
+        society_member_ids = SocietyMembership.objects.filter(
+            society=society
+        ).values_list('user_id', flat=True)
+        
+        # Get friends who are NOT society members
+        invitable_friends = User.objects.filter(
+            id__in=friend_ids
+        ).exclude(
+            id__in=society_member_ids
+        )
+        
+        # Optional search
+        search = self.request.query_params.get('search', '')
+        if search:
+            invitable_friends = invitable_friends.filter(
+                Q(profile_name__icontains=search) |
+                Q(email__icontains=search)
+            )
+        
+        return invitable_friends
+
+
+class SocietyInviteView(APIView):
+    """Send society invitation message to a friend"""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        from chat.models import Conversation, Message
+        
+        society = get_object_or_404(Society, id=pk)
+        friend_id = request.data.get('friend_id')
+        
+        if not friend_id:
+            return Response(
+                {"error": "friend_id is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            friend = User.objects.get(id=friend_id)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "Friend not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if they are friends
+        is_friend = Friendship.objects.filter(
+            Q(requester=request.user, receiver=friend, status='accepted') |
+            Q(requester=friend, receiver=request.user, status='accepted')
+        ).exists()
+        
+        if not is_friend:
+            return Response(
+                {"error": "You can only invite friends"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if friend is already a member
+        if SocietyMembership.objects.filter(society=society, user=friend).exists():
+            return Response(
+                {"error": "This user is already a member of the society"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get or create conversation
+        conversation = Conversation.objects.filter(
+            participants=request.user
+        ).filter(
+            participants=friend
+        ).first()
+        
+        if not conversation:
+            conversation = Conversation.objects.create()
+            conversation.participants.add(request.user, friend)
+        
+        # Create invitation message
+        # Build society link (absolute frontend URL)
+        # Get the frontend URL from request origin or use default
+        frontend_url = request.META.get('HTTP_ORIGIN', 'https://globalcreolesociety.com')
+        society_link = f"{frontend_url}/society/{society.id}"
+        invitation_message = f"Hey! I'd like to invite you to join our society '{society.name}'! Check it out here: {society_link}"
+        
+        message = Message.objects.create(
+            conversation=conversation,
+            sender=request.user,
+            content=invitation_message
+        )
+        
+        # Update conversation's last message
+        conversation.last_message = message
+        conversation.save()
+        
+        # Create notification for the friend
+        Notification.objects.create(
+            recipient=friend,
+            sender=request.user,
+            notification_type='society_invite',
+            society=society,
+            message=f"{request.user.profile_name} invited you to join {society.name}"
+        )
+        
+        return Response(
+            {"message": "Invitation sent successfully"},
+            status=status.HTTP_200_OK
+        )
+
     

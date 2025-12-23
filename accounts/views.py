@@ -380,6 +380,32 @@ class AddPhoneNumberView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class DeleteExtraEmailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, email_id):
+        user = request.user
+        try:
+            extra_email = ExtraEmail.objects.get(id=email_id, user=user)
+            extra_email.delete()
+            return Response({'message': 'Email removed successfully'}, status=status.HTTP_200_OK)
+        except ExtraEmail.DoesNotExist:
+            return Response({'error': 'Email not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class DeleteExtraPhoneNumberView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, phone_id):
+        user = request.user
+        try:
+            extra_phone = ExtraPhoneNumber.objects.get(id=phone_id, user=user)
+            extra_phone.delete()
+            return Response({'message': 'Phone number removed successfully'}, status=status.HTTP_200_OK)
+        except ExtraPhoneNumber.DoesNotExist:
+            return Response({'error': 'Phone number not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class SendOTPView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -452,4 +478,54 @@ class CookieTokenRefreshView(BaseTokenRefreshView):
                 {'detail': str(e)},
                 status=status.HTTP_401_UNAUTHORIZED
             )
+
+
+class UserSearchView(generics.ListAPIView):
+    """
+    Search for users by name, email, or username.
+    Returns users matching the search query.
+    
+    Query Parameters:
+    - q: Search query string (required)
+    - limit: Maximum number of results (default: 10, max: 50)
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+    
+    def get_queryset(self):
+        from django.db.models import Q
+        
+        query = self.request.query_params.get('q', '').strip()
+        limit = min(int(self.request.query_params.get('limit', 10)), 50)
+        
+        if not query:
+            return User.objects.none()
+        
+        # Search by profile_name or email
+        # Exclude the current user from results
+        return User.objects.filter(
+            Q(profile_name__icontains=query) |
+            Q(email__icontains=query)
+        ).exclude(
+            id=self.request.user.id
+        ).order_by('profile_name')[:limit]
+    
+    def list(self, request, *args, **kwargs):
+        query = request.query_params.get('q', '').strip()
+        
+        if not query:
+            return Response({
+                'results': [],
+                'count': 0,
+                'message': 'Please provide a search query'
+            })
+        
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        
+        return Response({
+            'results': serializer.data,
+            'count': len(serializer.data),
+            'query': query
+        })
     

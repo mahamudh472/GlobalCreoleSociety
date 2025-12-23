@@ -139,12 +139,18 @@ class PostSerializer(serializers.ModelSerializer):
     
     def get_society(self, obj):
         if obj.society:
+            # Use members_count annotation if available, otherwise count manually
+            members_count = getattr(obj.society, 'members_count', None)
+            if members_count is None:
+                members_count = obj.society.memberships.filter(status='accepted').count()
+            
             return {
                 'id': obj.society.id,
                 'name': obj.society.name,
                 'cover_image': self.context.get('request').build_absolute_uri(obj.society.cover_image.url) if obj.society.cover_image else None,
                 'background_image': self.context.get('request').build_absolute_uri(obj.society.background_image.url) if obj.society.background_image else None,
-                'members_count': obj.society.member_count,
+                'profile_image': self.context.get('request').build_absolute_uri(obj.society.profile_image.url) if obj.society.profile_image else None,
+                'members_count': members_count,
             }
         return None
     
@@ -407,19 +413,20 @@ class BulkPostShareSerializer(serializers.Serializer):
 
 class SocietySerializer(serializers.ModelSerializer):
     creator = UserBasicSerializer(read_only=True)
-    member_count = serializers.IntegerField(read_only=True)
+    members_count = serializers.IntegerField(read_only=True)
+    pending_posts_count = serializers.IntegerField(read_only=True, required=False)
+    pending_members_count = serializers.IntegerField(read_only=True, required=False)
     user_membership = serializers.SerializerMethodField()
     is_member = serializers.SerializerMethodField()
     media_count = serializers.SerializerMethodField()
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
-    pending_post_count = serializers.SerializerMethodField()
-    pending_membership_request_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Society
         fields = [
-            'id', 'name', 'description', 'cover_image', 'background_image', 'privacy',
-            'creator', 'member_count', 'user_membership', 'is_member', 'media_count', 'post_count', 'pending_post_count', 'pending_membership_request_count',
+            'id', 'name', 'description', 'profile_image', 'cover_image', 'background_image', 'privacy',
+            'creator', 'members_count', 'user_membership', 'is_member', 'media_count', 'post_count', 
+            'pending_posts_count', 'pending_members_count',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'creator', 'created_at', 'updated_at']
@@ -452,14 +459,6 @@ class SocietySerializer(serializers.ModelSerializer):
     def get_media_count(self, obj):
         """Get count of media posts in the society"""
         return PostMedia.objects.filter(post__society=obj).count()
-    
-    def get_pending_post_count(self, obj):
-        """Get count of pending posts in the society"""
-        return Post.objects.filter(society=obj, status='pending').count()
-    
-    def get_pending_membership_request_count(self, obj):
-        """Get count of pending membership requests in the society"""
-        return SocietyMembership.objects.filter(society=obj, status='pending').count()
 
 
 class SocietyMembershipSerializer(serializers.ModelSerializer):

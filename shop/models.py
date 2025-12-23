@@ -118,16 +118,23 @@ class CartItem(models.Model):
 class Order(models.Model):
     """Order model"""
     STATUS_CHOICES = [
-        ('order_created', 'Order Created'),
-        ('payment_completed', 'Payment Completed'),
-        ('packed', 'Packed'),
-        ('sent', 'Sent'),
-        ('received', 'Received'),
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('shipped', 'Shipped'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='order_created')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     
     # Shipping information
     # shipping_address = models.TextField()
@@ -136,7 +143,8 @@ class Order(models.Model):
     # shipping_country = models.CharField(max_length=100)
     # shipping_phone = models.CharField(max_length=20)
     delivery_type = models.CharField(max_length=100, choices=[('home', 'Home'), ('outlet', 'Outlet')], default='home')
-    payment_method = models.CharField(max_length=100, choices=[('stripe', 'Stripe'), ('cash_on_delivery', 'Cash on Delivery')], default='stripe')
+    payment_method = models.CharField(max_length=100, choices=[('card', 'Card'), ('cash_on_delivery', 'Cash on Delivery')], default='card')
+    stripe_session_id = models.CharField(max_length=255, blank=True, null=True)
     
     # Order tracking
     created_at = models.DateTimeField(auto_now_add=True)
@@ -151,7 +159,7 @@ class Order(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username}"
+        return f"Order #{self.id} by {self.user.email}"
 
 
 class OrderItem(models.Model):

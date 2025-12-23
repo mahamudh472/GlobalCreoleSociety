@@ -196,12 +196,14 @@ class OrderSerializer(serializers.ModelSerializer):
     """Serializer for Order model"""
     items = OrderItemSerializer(many=True, read_only=True)
     user_name = serializers.CharField(source='user.profile_name', read_only=True)
+    # Alias for frontend compatibility
+    total_price = serializers.DecimalField(source='total_amount', max_digits=10, decimal_places=2, read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user', 'user_name', 'total_amount', 'status',
-                  'items', 'notes', 'created_at', 'updated_at']
-        read_only_fields = ['user', 'total_amount', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'user_name', 'total_amount', 'total_price', 'status', 'payment_status',
+                  'payment_method', 'delivery_type', 'items', 'notes', 'created_at', 'updated_at']
+        read_only_fields = ['user', 'total_amount', 'total_price', 'created_at', 'updated_at']
 
 
 class CheckoutSerializer(serializers.Serializer):

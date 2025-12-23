@@ -20,6 +20,16 @@ class EducationSerializer(serializers.ModelSerializer):
         model = Education
         fields = ['id', 'collage', 'subject', 'description', 'created_at', 'updated_at']
 
+class ExtraEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExtraEmail
+        fields = ['id', 'email', 'is_verified', 'created_at']
+
+class ExtraPhoneNumberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ExtraPhoneNumber
+        fields = ['id', 'phone_number', 'is_verified', 'created_at']
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
@@ -68,6 +78,8 @@ class UserSerializer(serializers.ModelSerializer):
     locations = LocationSerializer(many=True, read_only=True)
     works = WorkSerializer(many=True, read_only=True)
     educations = EducationSerializer(many=True, read_only=True)
+    extra_emails = ExtraEmailSerializer(many=True, read_only=True)
+    extra_phone_numbers = ExtraPhoneNumberSerializer(many=True, read_only=True)
     profile_image = serializers.ImageField(required=False, allow_null=True)
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
     friends_count = serializers.SerializerMethodField()
@@ -77,8 +89,9 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'profile_name', 'description', 'profile_image', 'cover_photo',
                   'website', 'phone_number', 'gender', 'date_of_birth', 'profile_lock',
-                  'date_joined', 'locations', 'works', 'educations', 'post_count', 'friends_count', 'likes_count']
-        read_only_fields = ['id', 'date_joined', 'post_count', 'friends_count', 'likes_count']
+                  'date_joined', 'locations', 'works', 'educations', 'extra_emails', 'extra_phone_numbers',
+                  'post_count', 'friends_count', 'likes_count', 'stripe_account_id', 'is_onboarding_completed']
+        read_only_fields = ['id', 'date_joined', 'post_count', 'friends_count', 'likes_count', 'stripe_account_id', 'is_onboarding_completed']
     
     
     def to_representation(self, instance):

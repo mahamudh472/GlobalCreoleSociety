@@ -540,9 +540,25 @@ class CheckoutPreviewAPIView(generics.GenericAPIView):
         """
         cart, created = Cart.objects.get_or_create(user=request.user)
         cart_items = cart.items.select_related('product')
-        products = cart_items.values('product__name', "quantity")
         
-
+        # Build products list with all needed info
+        products = []
+        for item in cart_items:
+            product = item.product
+            # Get first product image
+            first_image = product.images.first()
+            image_url = None
+            if first_image and first_image.image:
+                image_url = request.build_absolute_uri(first_image.image.url)
+            
+            products.append({
+                'id': product.id,
+                'name': product.name,
+                'price': str(product.price),
+                'quantity': item.quantity,
+                'subtotal': str(item.subtotal),
+                'image': image_url,
+            })
 
         if not DeliveryAddress.objects.filter(user=request.user).exists():
             deliver_address = None
@@ -550,13 +566,18 @@ class CheckoutPreviewAPIView(generics.GenericAPIView):
             deliver_address = DeliveryAddressSerializer(DeliveryAddress.objects.get(user=request.user)).data
 
         if not cart_items:
-            return Response(
-                {'error': 'Cart is empty'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({
+                'item_count': 0,
+                'delivery_address': deliver_address,
+                'products': [],
+                'subtotal': 0,
+                'delivery_fee': 0,
+                'tax_amount': 0,
+                'shipping_cost': 0,
+                'total_amount': 0,
+            })
         
         subtotal = sum(item.subtotal for item in cart_items)
-
 
         from accounts.models import SiteSetting
         site_setting = SiteSetting.get()
@@ -565,16 +586,14 @@ class CheckoutPreviewAPIView(generics.GenericAPIView):
         total_amount = subtotal + tax_amount + shipping_cost
 
         return Response({
-            # 'total_amount': total_amount,
             'item_count': cart_items.count(),
             'delivery_address': deliver_address,
             'products': products,
-
-            'subtotal': subtotal,
+            'subtotal': str(subtotal),
             'delivery_fee': 0,
-            'tax_amount': tax_amount,
-            'shipping_cost': shipping_cost,
-            'total_amount': total_amount,
+            'tax_amount': str(tax_amount),
+            'shipping_cost': str(shipping_cost),
+            'total_amount': str(total_amount),
         })
 
 
@@ -617,6 +636,7 @@ class CreateStripeConnectedAccountAPIView(generics.GenericAPIView):
         try:
             account = stripe.Account.create(
                 type='express',
+                email=user.email,
                 capabilities={
                     'card_payments': {'requested': True},
                     'transfers': {'requested': True},
@@ -627,11 +647,13 @@ class CreateStripeConnectedAccountAPIView(generics.GenericAPIView):
             user.stripe_account_id = account.id
             user.save()
             
-            refresh_url = request.build_absolute_uri('api/shop/stripe/create-connected-account/')
+            # Get frontend URL from request or use default
+            frontend_url = request.data.get('frontend_url', 'http://localhost:5173')
+            
             account_link = stripe.AccountLink.create(
                 account=account.id,
-                refresh_url=refresh_url,
-                return_url='https://10.10.13.99/marketplace/',
+                refresh_url=f'{frontend_url}/marketplace/myproduct/addproduct',
+                return_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_onboarding=complete',
                 type='account_onboarding',
             )
 
@@ -652,36 +674,129 @@ class CreateCheckoutSessionAPIView(generics.GenericAPIView):
 
     def post(self, request):
         """
-        Create a Stripe Checkout Session for the authenticated user.
+        Create a Stripe Checkout Session for the authenticated user's cart.
+        Groups items by seller and creates a single session with platform fees.
         """
         user = request.user
-        unit_amount = 2000  # Amount in cents ($20.00)
-        platform_fee_amount = unit_amount * 0.02
+        
+        # Get cart items
         try:
-            checkout_session = stripe.checkout.Session.create(
-                payment_method_types=['card'],
-                line_items=[
-                    {
-                        'price_data': {
-                            'currency': 'usd',
-                            'product_data': {
-                                'name': 'Sample Product',
-                            },
-                            'unit_amount': 2000,
-                        },
-                        'quantity': 1,
-                    },
-                ],
-                mode='payment',
-                payment_intent_data={
-                    'application_fee_amount': int(platform_fee_amount),
-                    'transfer_data': {
-                        'destination': 'acct_1SgYrsFbcyMVJb4e',
-                    },
-                },
-                success_url='http://10.10.13.99:8001/success',
-                cancel_url='http://10.10.13.99:8001/cancel',
+            cart = Cart.objects.get(user=user)
+            cart_items = cart.items.select_related('product__seller').all()
+        except Cart.DoesNotExist:
+            return Response(
+                {'error': 'Cart is empty'},
+                status=status.HTTP_400_BAD_REQUEST
             )
+        
+        if not cart_items.exists():
+            return Response(
+                {'error': 'Cart is empty'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get site settings for tax and shipping
+        from accounts.models import SiteSetting
+        site_setting = SiteSetting.get()
+        
+        # Build line items from cart
+        line_items = []
+        subtotal = 0
+        seller_account = None
+        
+        for item in cart_items:
+            product = item.product
+            # Get seller's Stripe account
+            if product.seller and product.seller.stripe_account_id:
+                seller_account = product.seller.stripe_account_id
+            
+            item_subtotal = int(float(product.price) * item.quantity * 100)  # Convert to cents
+            subtotal += item_subtotal
+            
+            # Get first product image if available
+            image_url = None
+            first_image = product.images.first()
+            if first_image and first_image.image:
+                image_url = request.build_absolute_uri(first_image.image.url)
+            
+            line_item = {
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': product.name,
+                        'description': product.description[:500] if product.description else None,
+                    },
+                    'unit_amount': int(float(product.price) * 100),  # Convert to cents
+                },
+                'quantity': item.quantity,
+            }
+            
+            # Add image if available
+            if image_url:
+                line_item['price_data']['product_data']['images'] = [image_url]
+            
+            line_items.append(line_item)
+        
+        # Calculate platform fee (2% of subtotal)
+        platform_fee_amount = int(subtotal * 0.02)
+        
+        # Calculate tax and shipping in cents
+        tax_amount = int((site_setting.product_tax / 100) * subtotal)
+        shipping_amount = int(float(site_setting.shipping_cost) * 100)
+        
+        # Add tax as a line item if applicable
+        if tax_amount > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Tax',
+                    },
+                    'unit_amount': tax_amount,
+                },
+                'quantity': 1,
+            })
+        
+        # Add shipping as a line item if applicable
+        if shipping_amount > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'usd',
+                    'product_data': {
+                        'name': 'Shipping',
+                    },
+                    'unit_amount': shipping_amount,
+                },
+                'quantity': 1,
+            })
+
+        try:
+            # Get success and cancel URLs from frontend
+            frontend_url = request.data.get('frontend_url', 'http://localhost:5173')
+            
+            session_data = {
+                'payment_method_types': ['card'],
+                'line_items': line_items,
+                'mode': 'payment',
+                'success_url': f'{frontend_url}/marketplace/order-success?session_id={{CHECKOUT_SESSION_ID}}',
+                'cancel_url': f'{frontend_url}/marketplace/cart',
+                'customer_email': user.email,
+                'metadata': {
+                    'user_id': str(user.id),
+                    'cart_id': str(cart.id),
+                },
+            }
+            
+            # If seller has Stripe account, add transfer data
+            if seller_account:
+                session_data['payment_intent_data'] = {
+                    'application_fee_amount': platform_fee_amount,
+                    'transfer_data': {
+                        'destination': seller_account,
+                    },
+                }
+            
+            checkout_session = stripe.checkout.Session.create(**session_data)
 
             return Response({
                 'checkout_session_id': checkout_session.id,

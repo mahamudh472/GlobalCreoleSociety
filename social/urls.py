@@ -12,6 +12,7 @@ from .views import (
     SocietyListView, SocietyCreateView, SocietyDetailView,
     SocietyJoinView, SocietyLeaveView, SocietyMemberListView, SocietyPostListView,
     ApproveMembershipRequestView, RejectPostView, ApprovePostView, PendingPostsView, PendingMembershipRequestsView,
+    SocietyInvitableFriendsView, SocietyInviteView,
     
     # Story views
     StoryListView, StoryCreateView, StoryDetailView,
@@ -59,6 +60,8 @@ urlpatterns = [
     path('posts/<uuid:pk>/reject/', RejectPostView.as_view(), name='reject-post'),
     path('societies/<uuid:pk>/pending-posts/', PendingPostsView.as_view(), name='pending-posts'),
     path('societies/<uuid:pk>/pending-membership-requests/', PendingMembershipRequestsView.as_view(), name='pending-membership-requests'),
+    path('societies/<uuid:pk>/invitable-friends/', SocietyInvitableFriendsView.as_view(), name='society-invitable-friends'),
+    path('societies/<uuid:pk>/invite/', SocietyInviteView.as_view(), name='society-invite'),
 
     
     # ============== Stories ==============
