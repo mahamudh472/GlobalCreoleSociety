@@ -446,11 +446,8 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             order = Order.objects.create(
                 user=request.user,
                 total_amount=total_amount,
-                shipping_address=serializer.validated_data['shipping_address'],
-                shipping_city=serializer.validated_data['shipping_city'],
-                shipping_postal_code=serializer.validated_data['shipping_postal_code'],
-                shipping_country=serializer.validated_data['shipping_country'],
-                shipping_phone=serializer.validated_data['shipping_phone'],
+                delivery_type=serializer.validated_data.get('delivery_type', 'home'),
+                payment_method=serializer.validated_data.get('payment_method', 'cash_on_delivery'),
                 notes=serializer.validated_data.get('notes', '')
             )
 
@@ -507,11 +504,8 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             order = Order.objects.create(
                 user=request.user,
                 total_amount=total_amount,
-                shipping_address=serializer.validated_data['shipping_address'],
-                shipping_city=serializer.validated_data['shipping_city'],
-                shipping_postal_code=serializer.validated_data['shipping_postal_code'],
-                shipping_country=serializer.validated_data['shipping_country'],
-                shipping_phone=serializer.validated_data['shipping_phone'],
+                delivery_type=serializer.validated_data.get('delivery_type', 'home'),
+                payment_method=serializer.validated_data.get('payment_method', 'cash_on_delivery'),
                 notes=serializer.validated_data.get('notes', '')
             )
 

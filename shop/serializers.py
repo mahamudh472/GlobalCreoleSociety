@@ -213,11 +213,8 @@ class CheckoutSerializer(serializers.Serializer):
         required=False,
         help_text="List of cart item IDs to checkout. If not provided, all cart items will be used."
     )
-    shipping_address = serializers.CharField()
-    shipping_city = serializers.CharField(max_length=100)
-    shipping_postal_code = serializers.CharField(max_length=20)
-    shipping_country = serializers.CharField(max_length=100)
-    shipping_phone = serializers.CharField(max_length=20)
+    delivery_type = serializers.CharField(required=False, default='home')
+    payment_method = serializers.CharField(required=False, default='cash_on_delivery')
     notes = serializers.CharField(required=False, allow_blank=True)
 
     def validate_cart_item_ids(self, value):
@@ -240,11 +237,8 @@ class BuyNowSerializer(serializers.Serializer):
     """Serializer for buy now (single item checkout)"""
     product_id = serializers.IntegerField()
     quantity = serializers.IntegerField(min_value=1)
-    shipping_address = serializers.CharField()
-    shipping_city = serializers.CharField(max_length=100)
-    shipping_postal_code = serializers.CharField(max_length=20)
-    shipping_country = serializers.CharField(max_length=100)
-    shipping_phone = serializers.CharField(max_length=20)
+    delivery_type = serializers.CharField(required=False, default='home')
+    payment_method = serializers.CharField(required=False, default='cash_on_delivery')
     notes = serializers.CharField(required=False, allow_blank=True)
 
     def validate_product_id(self, value):
