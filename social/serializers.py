@@ -420,19 +420,27 @@ class SocietySerializer(serializers.ModelSerializer):
     is_member = serializers.SerializerMethodField()
     media_count = serializers.SerializerMethodField()
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
-    profile_image = serializers.SerializerMethodField()
-    cover_image = serializers.SerializerMethodField()
-    background_image = serializers.SerializerMethodField()
+    
+    # Make image fields writable for create/update operations
+    profile_image_url = serializers.SerializerMethodField(source='get_profile_image')
+    cover_image_url = serializers.SerializerMethodField(source='get_cover_image')
+    background_image_url = serializers.SerializerMethodField(source='get_background_image')
     
     class Meta:
         model = Society
         fields = [
-            'id', 'name', 'description', 'profile_image', 'cover_image', 'background_image', 'privacy',
+            'id', 'name', 'description', 'profile_image', 'cover_image', 'background_image', 
+            'profile_image_url', 'cover_image_url', 'background_image_url', 'privacy',
             'creator', 'members_count', 'user_membership', 'is_member', 'media_count', 'post_count', 
             'pending_posts_count', 'pending_members_count',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'creator', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'creator', 'created_at', 'updated_at', 'profile_image_url', 'cover_image_url', 'background_image_url']
+        extra_kwargs = {
+            'profile_image': {'write_only': True, 'required': False},
+            'cover_image': {'write_only': True, 'required': False},
+            'background_image': {'write_only': True, 'required': False},
+        }
     
     def get_user_membership(self, obj):
         request = self.context.get('request')
@@ -463,7 +471,7 @@ class SocietySerializer(serializers.ModelSerializer):
         """Get count of media posts in the society"""
         return PostMedia.objects.filter(post__society=obj).count()
     
-    def get_profile_image(self, obj):
+    def get_profile_image_url(self, obj):
         """Return absolute URL for profile image"""
         if obj.profile_image and hasattr(obj.profile_image, 'url'):
             request = self.context.get('request')
@@ -473,7 +481,7 @@ class SocietySerializer(serializers.ModelSerializer):
             return f"{settings.BASE_URL}{obj.profile_image.url}"
         return None
     
-    def get_cover_image(self, obj):
+    def get_cover_image_url(self, obj):
         """Return absolute URL for cover image"""
         if obj.cover_image and hasattr(obj.cover_image, 'url'):
             request = self.context.get('request')
@@ -483,7 +491,7 @@ class SocietySerializer(serializers.ModelSerializer):
             return f"{settings.BASE_URL}{obj.cover_image.url}"
         return None
     
-    def get_background_image(self, obj):
+    def get_background_image_url(self, obj):
         """Return absolute URL for background image"""
         if obj.background_image and hasattr(obj.background_image, 'url'):
             request = self.context.get('request')
