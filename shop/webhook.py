@@ -34,9 +34,11 @@ def stripe_webhook(request):
         # Handle Stripe Connect account updates
         account = event['data']['object']
         account_id = account.get('id')
-        details_submitted = account.get('details_submitted', False)
-        
-        if details_submitted and account_id:
+        charges_enabled = account.get('charges_enabled', False)
+        payouts_enabled = account.get('payouts_enabled', False)
+
+        if charges_enabled and payouts_enabled and account_id:
+
             try:
                 from accounts.models import User
                 user = User.objects.get(stripe_account_id=account_id)
