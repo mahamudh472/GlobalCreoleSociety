@@ -1433,4 +1433,68 @@ class SocietyInviteView(APIView):
             status=status.HTTP_200_OK
         )
 
+
+# ============== Advertisement Views ==============
+
+from .models import Advertisement
+from .serializers import AdvertisementSerializer, AdvertisementCreateSerializer
+
+
+class AdvertisementCreateView(generics.CreateAPIView):
+    """
+    Submit an advertisement request.
+    No authentication required - anyone can submit an ad request.
+    """
+    permission_classes = [permissions.AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
+    serializer_class = AdvertisementCreateSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            advertisement = serializer.save()
+            return Response({
+                'message': 'Advertisement request submitted successfully. We will review your request and contact you soon.',
+                'data': AdvertisementSerializer(advertisement, context={'request': request}).data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdvertisementPublicListView(generics.ListAPIView):
+    """
+    List approved/active advertisements for public display.
+    No authentication required.
+    """
+    permission_classes = [permissions.AllowAny]
+    serializer_class = AdvertisementSerializer
+    
+    def get_queryset(self):
+        # Only return approved or active advertisements
+        return Advertisement.objects.filter(
+            status__in=['approved', 'active']
+        ).prefetch_related('media').order_by('-created_at')[:12]  # Limit to 12 for landing page
+
+
+class AdvertisementListView(generics.ListAPIView):
+    """
+    List all advertisements (admin only).
+    """
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AdvertisementSerializer
+    
+    def get_queryset(self):
+        queryset = Advertisement.objects.all().prefetch_related('media')
+        status_filter = self.request.query_params.get('status', None)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        return queryset
+
+
+class AdvertisementDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    View, update, or delete an advertisement (admin only).
+    """
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AdvertisementSerializer
+    queryset = Advertisement.objects.all().prefetch_related('media')
     

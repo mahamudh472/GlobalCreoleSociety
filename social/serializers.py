@@ -603,3 +603,89 @@ class NotificationSerializer(serializers.ModelSerializer):
             'is_read', 'created_at'
         ]
         read_only_fields = fields
+
+
+# ============== Advertisement Serializers ==============
+
+from .models import Advertisement, AdvertisementMedia
+
+class AdvertisementMediaSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AdvertisementMedia
+        fields = ['id', 'media_type', 'file', 'file_url', 'created_at']
+        read_only_fields = ['id', 'created_at']
+    
+    def get_file_url(self, obj):
+        if obj.file:
+            request = self.context.get('request')
+            if request is not None:
+                return request.build_absolute_uri(obj.file.url)
+            return f"{settings.BASE_URL}{obj.file.url}"
+        return None
+
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    media = AdvertisementMediaSerializer(many=True, read_only=True)
+    total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = Advertisement
+        fields = [
+            'id', 'company_name', 'email', 'country_code', 'phone_number',
+            'owner_name', 'title', 'description', 'duration_days', 'price_per_day',
+            'agree_to_share', 'status', 'total_price', 'media', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'status', 'created_at', 'updated_at']
+
+
+class AdvertisementCreateSerializer(serializers.ModelSerializer):
+    media_files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False
+    )
+    
+    class Meta:
+        model = Advertisement
+        fields = [
+            'company_name', 'email', 'country_code', 'phone_number',
+            'owner_name', 'title', 'description', 'duration_days', 'price_per_day',
+            'agree_to_share', 'media_files'
+        ]
+    
+    def validate_duration_days(self, value):
+        if value < 1:
+            raise serializers.ValidationError("Duration must be at least 1 day.")
+        if value > 365:
+            raise serializers.ValidationError("Duration cannot exceed 365 days.")
+        return value
+    
+    def validate_price_per_day(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Price must be greater than 0.")
+        return value
+    
+    def create(self, validated_data):
+        media_files = validated_data.pop('media_files', [])
+        
+        # Get user if authenticated
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['user'] = request.user
+        
+        advertisement = Advertisement.objects.create(**validated_data)
+        
+        # Create media files
+        for file in media_files:
+            file_ext = file.name.split('.')[-1].lower()
+            media_type = 'video' if file_ext in ['mp4', 'mov', 'avi'] else 'image'
+            
+            AdvertisementMedia.objects.create(
+                advertisement=advertisement,
+                media_type=media_type,
+                file=file
+            )
+        
+        return advertisement

@@ -22,6 +22,9 @@ from .views import (
     
     # User blocking views
     BlockUserView, UnblockUserView, BlockListView,
+    
+    # Advertisement views
+    AdvertisementCreateView, AdvertisementListView, AdvertisementDetailView, AdvertisementPublicListView,
 )
 
 urlpatterns = [
@@ -79,4 +82,10 @@ urlpatterns = [
     path('users/<uuid:pk>/block/', BlockUserView.as_view(), name='block-user'),
     path('users/<uuid:pk>/unblock/', UnblockUserView.as_view(), name='unblock-user'),
     path('users/blocked/', BlockListView.as_view(), name='blocked-user-list'),
+    
+    # ============== Advertisements ==============
+    path('advertisements/', AdvertisementListView.as_view(), name='advertisement-list'),
+    path('advertisements/public/', AdvertisementPublicListView.as_view(), name='advertisement-public-list'),
+    path('advertisements/create/', AdvertisementCreateView.as_view(), name='advertisement-create'),
+    path('advertisements/<uuid:pk>/', AdvertisementDetailView.as_view(), name='advertisement-detail'),
 ]

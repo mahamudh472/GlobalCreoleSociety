@@ -3,7 +3,8 @@ from .models import (
     Post, PostMedia, PostLike, Comment, CommentLike,
     Story, StoryMedia, StoryView,
     Society, SocietyMembership,
-    UserBlock, Notification
+    UserBlock, Notification,
+    Advertisement, AdvertisementMedia
 )
 
 
@@ -128,3 +129,32 @@ class NotificationAdmin(admin.ModelAdmin):
     def message_preview(self, obj):
         return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
     message_preview.short_description = 'Message'
+
+
+# ============== Advertisement Admin ==============
+
+class AdvertisementMediaInline(admin.TabularInline):
+    model = AdvertisementMedia
+    extra = 0
+
+
+@admin.register(Advertisement)
+class AdvertisementAdmin(admin.ModelAdmin):
+    list_display = ('company_name', 'owner_name', 'email', 'title', 'status', 'duration_days', 'price_per_day', 'total_price', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('company_name', 'owner_name', 'email', 'title', 'description')
+    date_hierarchy = 'created_at'
+    inlines = [AdvertisementMediaInline]
+    list_editable = ('status',)
+    
+    def total_price(self, obj):
+        return f"${obj.total_price}"
+    total_price.short_description = 'Total Price (USD)'
+
+
+@admin.register(AdvertisementMedia)
+class AdvertisementMediaAdmin(admin.ModelAdmin):
+    list_display = ('advertisement', 'media_type', 'created_at')
+    list_filter = ('media_type', 'created_at')
+    search_fields = ('advertisement__company_name', 'advertisement__title')
+    date_hierarchy = 'created_at'

@@ -355,3 +355,78 @@ class Notification(models.Model):
     
     def __str__(self):
         return f"Notification for {self.recipient}: {self.notification_type}"
+
+
+# ============== Advertisement Models ==============
+
+class Advertisement(models.Model):
+    """
+    Advertisement request model for businesses to submit ad requests
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    country_code = models.CharField(max_length=10, default='+1')
+    phone_number = models.CharField(max_length=20)
+    owner_name = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    duration_days = models.PositiveIntegerField(help_text="Number of days to run the advertisement")
+    price_per_day = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price in USD per day")
+    agree_to_share = models.BooleanField(default=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Optional: link to user if they are logged in when submitting
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='advertisements')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at']),
+            models.Index(fields=['status']),
+            models.Index(fields=['email']),
+        ]
+    
+    def __str__(self):
+        return f"Ad Request: {self.company_name} - {self.title}"
+    
+    @property
+    def total_price(self):
+        return self.duration_days * self.price_per_day
+
+
+class AdvertisementMedia(models.Model):
+    """
+    Media files for advertisements (images/videos)
+    """
+    MEDIA_TYPE_CHOICES = [
+        ('image', 'Image'),
+        ('video', 'Video'),
+    ]
+    
+    advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='media')
+    media_type = models.CharField(max_length=10, choices=MEDIA_TYPE_CHOICES)
+    file = models.FileField(
+        upload_to='advertisement_media/%Y/%m/%d/',
+        validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi'])]
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Advertisement Media"
+        ordering = ['created_at']
+    
+    def __str__(self):
+        return f"{self.media_type} for {self.advertisement.company_name}"
