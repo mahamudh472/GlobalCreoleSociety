@@ -422,9 +422,9 @@ class SocietySerializer(serializers.ModelSerializer):
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
     
     # Make image fields writable for create/update operations
-    profile_image_url = serializers.SerializerMethodField(source='get_profile_image')
-    cover_image_url = serializers.SerializerMethodField(source='get_cover_image')
-    background_image_url = serializers.SerializerMethodField(source='get_background_image')
+    profile_image_url = serializers.SerializerMethodField()
+    cover_image_url = serializers.SerializerMethodField()
+    background_image_url = serializers.SerializerMethodField()
     
     class Meta:
         model = Society

@@ -2,6 +2,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Prefetch, Count, Case, When
 from django.db import models
@@ -801,6 +802,7 @@ class SocietyCreateView(generics.CreateAPIView):
     """Create a new society"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SocietySerializer
+    parser_classes = [MultiPartParser, FormParser]
     
     def perform_create(self, serializer):
         society = serializer.save(creator=self.request.user)
@@ -818,6 +820,7 @@ class SocietyDetailView(generics.RetrieveUpdateDestroyAPIView):
     """View, update, or delete a society"""
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = SocietySerializer
+    parser_classes = [MultiPartParser, FormParser]
     
     def get_queryset(self):
         return Society.objects.select_related('creator').annotate(
