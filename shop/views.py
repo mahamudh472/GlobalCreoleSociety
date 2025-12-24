@@ -441,7 +441,15 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Create order
         with transaction.atomic():
-            total_amount = sum(item.subtotal for item in cart_items)
+            subtotal = sum(item.subtotal for item in cart_items)
+            
+            # Get tax and shipping from site settings
+            from accounts.models import SiteSetting
+            from decimal import Decimal
+            site_setting = SiteSetting.get()
+            tax_amount = (Decimal(site_setting.product_tax) / 100) * subtotal
+            shipping_cost = Decimal(site_setting.shipping_cost)
+            total_amount = subtotal + tax_amount + shipping_cost
             
             order = Order.objects.create(
                 user=request.user,
@@ -499,7 +507,15 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Create order
         with transaction.atomic():
-            total_amount = product.price * quantity
+            subtotal = product.price * quantity
+            
+            # Get tax and shipping from site settings
+            from accounts.models import SiteSetting
+            from decimal import Decimal
+            site_setting = SiteSetting.get()
+            tax_amount = (Decimal(site_setting.product_tax) / 100) * subtotal
+            shipping_cost = Decimal(site_setting.shipping_cost)
+            total_amount = subtotal + tax_amount + shipping_cost
             
             order = Order.objects.create(
                 user=request.user,
@@ -923,17 +939,53 @@ class CreateCheckoutSessionAPIView(generics.GenericAPIView):
         try:
             # Get success and cancel URLs from frontend
             frontend_url = request.data.get('frontend_url', 'http://localhost:5173')
+            delivery_type = request.data.get('delivery_type', 'home')
+            
+            # Calculate total amount in decimal for order
+            from decimal import Decimal
+            subtotal_decimal = sum(item.subtotal for item in cart_items)
+            tax_decimal = (Decimal(site_setting.product_tax) / 100) * subtotal_decimal
+            shipping_decimal = Decimal(site_setting.shipping_cost)
+            total_amount = subtotal_decimal + tax_decimal + shipping_decimal
+            
+            # Create order immediately with pending payment status
+            with transaction.atomic():
+                order = Order.objects.create(
+                    user=user,
+                    total_amount=total_amount,
+                    status='pending',
+                    delivery_type=delivery_type,
+                    payment_method='card',
+                    payment_status='pending',
+                )
+                
+                # Create order items and update stock
+                for item in cart_items:
+                    OrderItem.objects.create(
+                        order=order,
+                        product=item.product,
+                        product_name=item.product.name,
+                        product_price=item.product.price,
+                        quantity=item.quantity,
+                    )
+                    
+                    # Reduce stock immediately to prevent overselling
+                    item.product.stock -= item.quantity
+                    item.product.save()
+                
+                # Clear the cart
+                cart.items.all().delete()
             
             session_data = {
                 'payment_method_types': ['card'],
                 'line_items': line_items,
                 'mode': 'payment',
-                'success_url': f'{frontend_url}/marketplace/order-success?session_id={{CHECKOUT_SESSION_ID}}',
-                'cancel_url': f'{frontend_url}/marketplace/cart',
+                'success_url': f'{frontend_url}/marketplace/order-success?session_id={{CHECKOUT_SESSION_ID}}&order_id={order.id}',
+                'cancel_url': f'{frontend_url}/marketplace/checkout?order_id={order.id}&cancelled=true',
                 'customer_email': user.email,
                 'metadata': {
                     'user_id': str(user.id),
-                    'cart_id': str(cart.id),
+                    'order_id': str(order.id),
                 },
             }
             
@@ -947,10 +999,15 @@ class CreateCheckoutSessionAPIView(generics.GenericAPIView):
                 }
             
             checkout_session = stripe.checkout.Session.create(**session_data)
+            
+            # Save stripe session id to order
+            order.stripe_session_id = checkout_session.id
+            order.save()
 
             return Response({
                 'checkout_session_id': checkout_session.id,
-                'checkout_url': checkout_session.url
+                'checkout_url': checkout_session.url,
+                'order_id': str(order.id),
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:

@@ -48,65 +48,82 @@ def stripe_webhook(request):
                 pass
     
     elif event_type == 'checkout.session.completed':
-        # Handle successful checkout
+        # Handle successful checkout - update order payment status
         session = event['data']['object']
         
         # Get metadata
-        user_id = session.get('metadata', {}).get('user_id')
-        cart_id = session.get('metadata', {}).get('cart_id')
+        metadata = session.get('metadata', {})
+        order_id = metadata.get('order_id')
         
-        if user_id and cart_id:
+        if order_id:
             try:
-                with transaction.atomic():
-                    from accounts.models import User
-                    from .models import Cart, Order, OrderItem
+                from .models import Order
+                from django.utils import timezone
+                
+                order = Order.objects.get(id=order_id)
+                order.payment_status = 'paid'
+                order.status = 'processing'
+                order.payment_at = timezone.now()
+                order.save()
                     
-                    user = User.objects.get(id=user_id)
-                    cart = Cart.objects.get(id=cart_id, user=user)
-                    
-                    # Create order from cart
-                    total_amount = sum(item.subtotal for item in cart.items.all())
-                    
-                    order = Order.objects.create(
-                        user=user,
-                        total_amount=total_amount,
-                        status='processing',
-                        payment_method='card',
-                        payment_status='paid',
-                        stripe_session_id=session.get('id'),
-                    )
-                    
-                    # Create order items from cart items
-                    for cart_item in cart.items.select_related('product').all():
-                        OrderItem.objects.create(
-                            order=order,
-                            product=cart_item.product,
-                            product_name=cart_item.product.title,
-                            product_price=cart_item.product.price,
-                            quantity=cart_item.quantity,
-                        )
-                        
-                        # Reduce stock
-                        cart_item.product.stock -= cart_item.quantity
-                        cart_item.product.save()
-                    
-                    # Clear the cart
-                    cart.items.all().delete()
-                    
+            except Order.DoesNotExist:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Order not found for checkout webhook: {order_id}")
             except Exception as e:
-                # Log the error but don't fail the webhook
-                print(f"Error processing checkout webhook: {e}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error processing checkout webhook: {e}")
     
     elif event_type == 'checkout.session.expired':
-        # Handle expired checkout session
+        # Handle expired checkout session - cancel order and restore stock
         session = event['data']['object']
-        # You could notify the user here or clean up any pending records
-        pass
+        metadata = session.get('metadata', {})
+        order_id = metadata.get('order_id')
+        
+        if order_id:
+            try:
+                from .models import Order
+                
+                order = Order.objects.get(id=order_id)
+                
+                # Only cancel if still pending payment
+                if order.payment_status == 'pending':
+                    order.status = 'cancelled'
+                    order.payment_status = 'failed'
+                    order.save()
+                    
+                    # Restore stock
+                    for item in order.items.select_related('product').all():
+                        if item.product:
+                            item.product.stock += item.quantity
+                            item.product.save()
+                            
+            except Order.DoesNotExist:
+                pass
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error handling expired session: {e}")
     
     elif event_type == 'payment_intent.payment_failed':
-        # Handle failed payment
+        # Handle failed payment - update order status
         payment_intent = event['data']['object']
-        # You could notify the user here
-        pass
+        session_id = payment_intent.get('metadata', {}).get('session_id')
+        
+        if session_id:
+            try:
+                from .models import Order
+                
+                order = Order.objects.get(stripe_session_id=session_id)
+                if order.payment_status == 'pending':
+                    order.payment_status = 'failed'
+                    order.save()
+            except Order.DoesNotExist:
+                pass
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error handling payment failed: {e}")
 
     return HttpResponse(status=200)
