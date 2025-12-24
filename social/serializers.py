@@ -421,7 +421,7 @@ class SocietySerializer(serializers.ModelSerializer):
     media_count = serializers.SerializerMethodField()
     post_count = serializers.IntegerField(source='posts.count', read_only=True)
     
-    # Make image fields writable for create/update operations
+    # Read-only URL fields for image display
     profile_image_url = serializers.SerializerMethodField()
     cover_image_url = serializers.SerializerMethodField()
     background_image_url = serializers.SerializerMethodField()
@@ -435,12 +435,7 @@ class SocietySerializer(serializers.ModelSerializer):
             'pending_posts_count', 'pending_members_count',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'creator', 'created_at', 'updated_at', 'profile_image_url', 'cover_image_url', 'background_image_url']
-        extra_kwargs = {
-            'profile_image': {'write_only': True, 'required': False},
-            'cover_image': {'write_only': True, 'required': False},
-            'background_image': {'write_only': True, 'required': False},
-        }
+        read_only_fields = ['id', 'creator', 'created_at', 'updated_at']
     
     def get_user_membership(self, obj):
         request = self.context.get('request')
@@ -473,11 +468,10 @@ class SocietySerializer(serializers.ModelSerializer):
     
     def get_profile_image_url(self, obj):
         """Return absolute URL for profile image"""
-        if obj.profile_image and hasattr(obj.profile_image, 'url'):
+        if obj.profile_image:
             request = self.context.get('request')
-            if request is not None:
+            if request:
                 return request.build_absolute_uri(obj.profile_image.url)
-            # Fallback to BASE_URL when request is not available
             return f"{settings.BASE_URL}{obj.profile_image.url}"
         return None
     
