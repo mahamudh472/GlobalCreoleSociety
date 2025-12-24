@@ -186,9 +186,10 @@ class CartSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     """Serializer for OrderItem model"""
+    product_image = serializers.ImageField(source='product.images.first.image', read_only=True)
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'product_price', 'quantity', 'subtotal']
+        fields = ['id', 'product', 'product_name', 'product_image', 'product_price', 'quantity', 'subtotal']
         read_only_fields = ['product_name', 'product_price', 'subtotal']
 
 
