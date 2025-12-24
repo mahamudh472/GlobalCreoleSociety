@@ -4,7 +4,10 @@ from accounts.views import (
     ChangePhoneNumberView, DeleteExtraEmailView, DeleteExtraPhoneNumberView,
     RegisterView, LoginView, LogoutView, SendOTPView, 
     UserLockView, UserProfileView, OtherUserProfileView, CookieTokenRefreshView,
-    UserSearchView
+    UserSearchView,
+    LocationListCreateView, LocationDetailView,
+    WorkListCreateView, WorkDetailView,
+    EducationListCreateView, EducationDetailView
 )
 
 
@@ -25,4 +28,13 @@ urlpatterns = [
     path('delete-phone-number/<int:phone_id>/', DeleteExtraPhoneNumberView.as_view(), name='delete_extra_phone'),
     path('profile-lock/', UserLockView.as_view(), name='profile_lock'),
     path('search/', UserSearchView.as_view(), name='user_search'),
+    # Locations
+    path('locations/', LocationListCreateView.as_view(), name='location_list_create'),
+    path('locations/<int:pk>/', LocationDetailView.as_view(), name='location_detail'),
+    # Works
+    path('works/', WorkListCreateView.as_view(), name='work_list_create'),
+    path('works/<int:pk>/', WorkDetailView.as_view(), name='work_detail'),
+    # Education
+    path('educations/', EducationListCreateView.as_view(), name='education_list_create'),
+    path('educations/<int:pk>/', EducationDetailView.as_view(), name='education_detail'),
 ]

@@ -6,8 +6,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 from rest_framework_simplejwt.exceptions import InvalidToken
 from django.conf import settings
-from .models import User, OTP, ExtraEmail, ExtraPhoneNumber
-from .serializers import ChangePasswordSerializer, ChangeEmailSerializer, ChangePhoneNumberSerializer, AddEmailSerializer, AddPhoneNumberSerializer, RegisterSerializer, LoginSerializer, UserSerializer
+from .models import User, OTP, ExtraEmail, ExtraPhoneNumber, Location, Work, Education
+from .serializers import (
+    ChangePasswordSerializer, ChangeEmailSerializer, ChangePhoneNumberSerializer, 
+    AddEmailSerializer, AddPhoneNumberSerializer, RegisterSerializer, LoginSerializer, 
+    UserSerializer, LocationSerializer, WorkSerializer, EducationSerializer
+)
 import random
 from .utils import send_otp_email
 
@@ -528,4 +532,69 @@ class UserSearchView(generics.ListAPIView):
             'count': len(serializer.data),
             'query': query
         })
-    
+
+
+# Location Views
+class LocationListCreateView(generics.ListCreateAPIView):
+    """List all locations for the current user or create a new one"""
+    serializer_class = LocationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Location.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class LocationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a location"""
+    serializer_class = LocationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Location.objects.filter(user=self.request.user)
+
+
+# Work Views
+class WorkListCreateView(generics.ListCreateAPIView):
+    """List all works for the current user or create a new one"""
+    serializer_class = WorkSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Work.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class WorkDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a work entry"""
+    serializer_class = WorkSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Work.objects.filter(user=self.request.user)
+
+
+# Education Views
+class EducationListCreateView(generics.ListCreateAPIView):
+    """List all educations for the current user or create a new one"""
+    serializer_class = EducationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Education.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class EducationDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete an education entry"""
+    serializer_class = EducationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Education.objects.filter(user=self.request.user)
