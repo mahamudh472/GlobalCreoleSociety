@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     CategoryViewSet, ProductViewSet, CartViewSet, 
     OrderViewSet, DeliveryAddressAPIView, CheckoutPreviewAPIView, 
-    CreateStripeConnectedAccountAPIView, CreateCheckoutSessionAPIView
+    CreateStripeConnectedAccountAPIView, CreateCheckoutSessionAPIView,
+    StripeAccountStatusAPIView, ResumeStripeOnboardingAPIView
     )
 from .webhook import stripe_webhook
 
@@ -21,5 +22,7 @@ urlpatterns = [
     path('checkout/preview/', CheckoutPreviewAPIView.as_view(), name='checkout-preview'),
     path('checkout/create-session/', CreateCheckoutSessionAPIView.as_view(), name='create-checkout-session'),
     path('stripe/create-connected-account/', CreateStripeConnectedAccountAPIView.as_view(), name='create-stripe-connected-account'),
+    path('stripe/account-status/', StripeAccountStatusAPIView.as_view(), name='stripe-account-status'),
+    path('stripe/resume-onboarding/', ResumeStripeOnboardingAPIView.as_view(), name='stripe-resume-onboarding'),
     path('webhook/stripe/', stripe_webhook, name='stripe-webhook'),
 ]

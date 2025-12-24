@@ -612,20 +612,175 @@ class DeliveryAddressAPIView(viewsets.ViewSet):
         })
     
 
+class StripeAccountStatusAPIView(generics.GenericAPIView):
+    """Get Stripe account status and verification details."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get the Stripe account status for the authenticated user.
+        Returns account details including verification status.
+        """
+        user = request.user
+
+        if not user.stripe_account_id:
+            return Response({
+                'has_account': False,
+                'is_onboarding_completed': False,
+                'message': 'No Stripe account connected.'
+            })
+
+        try:
+            # Retrieve account details from Stripe
+            account = stripe.Account.retrieve(user.stripe_account_id)
+            
+            # Check if onboarding is complete
+            details_submitted = account.get('details_submitted', False)
+            charges_enabled = account.get('charges_enabled', False)
+            payouts_enabled = account.get('payouts_enabled', False)
+            
+            # Update local database if status changed
+            if details_submitted and not user.is_onboarding_completed:
+                user.is_onboarding_completed = True
+                user.save()
+            
+            # Get requirements if any
+            requirements = account.get('requirements', {})
+            currently_due = requirements.get('currently_due', [])
+            eventually_due = requirements.get('eventually_due', [])
+            pending_verification = requirements.get('pending_verification', [])
+            
+            return Response({
+                'has_account': True,
+                'stripe_account_id': user.stripe_account_id,
+                'is_onboarding_completed': user.is_onboarding_completed,
+                'details_submitted': details_submitted,
+                'charges_enabled': charges_enabled,
+                'payouts_enabled': payouts_enabled,
+                'requirements': {
+                    'currently_due': currently_due,
+                    'eventually_due': eventually_due,
+                    'pending_verification': pending_verification,
+                },
+                'needs_action': len(currently_due) > 0 or not details_submitted,
+            })
+
+        except stripe.error.InvalidRequestError:
+            # Account doesn't exist on Stripe anymore, clean up
+            user.stripe_account_id = None
+            user.is_onboarding_completed = False
+            user.save()
+            return Response({
+                'has_account': False,
+                'is_onboarding_completed': False,
+                'message': 'Stripe account was removed or invalid. Please create a new account.'
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ResumeStripeOnboardingAPIView(generics.GenericAPIView):
+    """Resume Stripe onboarding for incomplete accounts."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Generate a new onboarding link for an existing Stripe account.
+        Use this when a user needs to complete or update their account.
+        """
+        user = request.user
+
+        if not user.stripe_account_id:
+            return Response(
+                {'error': 'No Stripe account found. Please create an account first.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Verify account still exists on Stripe
+            account = stripe.Account.retrieve(user.stripe_account_id)
+            
+            # Get frontend URL from request or use default
+            frontend_url = request.data.get('frontend_url', 'http://localhost:5173')
+            
+            # Create new account link for onboarding
+            account_link = stripe.AccountLink.create(
+                account=user.stripe_account_id,
+                refresh_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_refresh=true',
+                return_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_onboarding=complete',
+                type='account_onboarding',
+            )
+
+            return Response({
+                'message': 'Onboarding link generated successfully.',
+                'account_link_url': account_link.url,
+                'stripe_account_id': user.stripe_account_id,
+            })
+
+        except stripe.error.InvalidRequestError:
+            # Account doesn't exist on Stripe anymore, clean up
+            user.stripe_account_id = None
+            user.is_onboarding_completed = False
+            user.save()
+            return Response(
+                {'error': 'Stripe account not found. Please create a new account.', 'account_deleted': True},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class CreateStripeConnectedAccountAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
         """
         Create a Stripe Connected Account for the authenticated user.
+        If account already exists but onboarding incomplete, returns a new onboarding link.
         """
         user = request.user
 
-        if hasattr(user, 'stripe_account_id') and user.stripe_account_id:
-            return Response(
-                {'error': 'Stripe Connected Account already exists for this user.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        # Check if user already has a Stripe account
+        if user.stripe_account_id:
+            try:
+                # Verify account exists on Stripe
+                account = stripe.Account.retrieve(user.stripe_account_id)
+                
+                # If account exists and onboarding is complete, return error
+                if user.is_onboarding_completed and account.get('details_submitted', False):
+                    return Response(
+                        {'error': 'Stripe Connected Account already exists and is fully set up.'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Account exists but onboarding incomplete - generate new link
+                frontend_url = request.data.get('frontend_url', 'http://localhost:5173')
+                
+                account_link = stripe.AccountLink.create(
+                    account=user.stripe_account_id,
+                    refresh_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_refresh=true',
+                    return_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_onboarding=complete',
+                    type='account_onboarding',
+                )
+
+                return Response({
+                    'message': 'Resuming Stripe onboarding.',
+                    'stripe_account_id': user.stripe_account_id,
+                    'account_link_url': account_link.url,
+                    'is_resuming': True
+                }, status=status.HTTP_200_OK)
+                
+            except stripe.error.InvalidRequestError:
+                # Account doesn't exist on Stripe, clear local reference and create new
+                user.stripe_account_id = None
+                user.is_onboarding_completed = False
+                user.save()
 
         try:
             account = stripe.Account.create(
@@ -646,7 +801,7 @@ class CreateStripeConnectedAccountAPIView(generics.GenericAPIView):
             
             account_link = stripe.AccountLink.create(
                 account=account.id,
-                refresh_url=f'{frontend_url}/marketplace/myproduct/addproduct',
+                refresh_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_refresh=true',
                 return_url=f'{frontend_url}/marketplace/myproduct/addproduct?stripe_onboarding=complete',
                 type='account_onboarding',
             )
@@ -654,7 +809,8 @@ class CreateStripeConnectedAccountAPIView(generics.GenericAPIView):
             return Response({
                 'message': 'Stripe Connected Account created successfully.',
                 'stripe_account_id': account.id,
-                'account_link_url': account_link.url
+                'account_link_url': account_link.url,
+                'is_resuming': False
             }, status=status.HTTP_201_CREATED)
 
         except Exception as e:
