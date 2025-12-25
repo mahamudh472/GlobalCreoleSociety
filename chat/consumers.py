@@ -633,6 +633,10 @@ class CallConsumer(AsyncWebsocketConsumer):
                 # Forward ICE candidate to the other peer
                 await self.handle_webrtc_signal(data, 'webrtc_ice_candidate')
 
+            elif message_type == 'ping':
+                # Respond to keepalive ping
+                await self.send(text_data=json.dumps({'type': 'pong'}))
+
         except json.JSONDecodeError:
             await self.send(text_data=json.dumps({
                 'type': 'error',
