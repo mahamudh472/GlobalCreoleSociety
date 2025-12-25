@@ -60,21 +60,20 @@ services:
   coturn:
     image: coturn/coturn
     container_name: globalcreolesociety_coturn
+    network_mode: host
     command:
       - -n
       - --log-file=stdout
+      - --listening-port=3478
       - --min-port=49152
       - --max-port=49160
-      - --listening-port=3478
       - --fingerprint
       - --lt-cred-mech
-      - --realm=globalcreolesociety.local
+      - --realm=turn.globalcreolesociety.com
       - --user=user:password
-    ports:
-      - "3478:3478/tcp"
-      - "3478:3478/udp"
-      - "49152-49160:49152-49160/udp"
+      - --external-ip=52.22.116.8
     restart: unless-stopped
+
 
 volumes:
   postgres_data:
