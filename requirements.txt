@@ -29,7 +29,7 @@ jsonschema==4.25.1
 jsonschema-specifications==2025.9.1
 msgpack==1.1.2
 pillow==12.0.0
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.11
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.23
@@ -54,4 +54,5 @@ txaio==25.9.2
 typing_extensions==4.15.0
 uritemplate==4.2.0
 urllib3==2.6.2
+whitenoise==6.11.0
 zope.interface==8.1.1
