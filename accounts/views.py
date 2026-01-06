@@ -634,4 +634,12 @@ class ResetPasswordView(APIView):
             else:
                 return Response({"code": ["Invalid code."]}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response({'error': 'Both code and new_password are required to reset password.'}, status=status.HTTP_400_BAD_REQUEST)
+            # Send OTP to email
+            code = random.randint(100000, 999999)
+            otp_instance = OTP.create_otp(OTP, user=user, code=code)
+
+            send_otp_email(user.email, code)
+            
+            print(f"OTP for password reset for user {user.email}: {code}")  # For demonstration purposes only
+            
+            return Response({'message': 'OTP sent to email successfully.'}, status=status.HTTP_200_OK)
