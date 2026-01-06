@@ -9,7 +9,7 @@ from django.conf import settings
 from .models import User, OTP, ExtraEmail, ExtraPhoneNumber, Location, Work, Education
 from .serializers import (
     ChangePasswordSerializer, ChangeEmailSerializer, ChangePhoneNumberSerializer, 
-    AddEmailSerializer, AddPhoneNumberSerializer, RegisterSerializer, LoginSerializer, 
+    AddEmailSerializer, AddPhoneNumberSerializer, RegisterSerializer, LoginSerializer, ResetPasswordSerializer, 
     UserSerializer, LocationSerializer, WorkSerializer, EducationSerializer
 )
 import random
@@ -598,3 +598,40 @@ class EducationDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Education.objects.filter(user=self.request.user)
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data.get('email')
+        code = serializer.validated_data.get('code', None)
+        new_password = serializer.validated_data.get('new_password', None)
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if code and new_password:
+            # Verify OTP and reset password
+            if OTP.objects.filter(user=user, code=code).exists():
+                otp_instance = OTP.objects.get(user=user, code=code)
+                if otp_instance.is_expired():
+                    return Response({"code": ["The code has expired."]}, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Set new password
+                user.set_password(new_password)
+                user.save()
+                
+                # Invalidate OTP
+                otp_instance.delete()
+                
+                return Response({'message': 'Password has been reset successfully.'}, status=status.HTTP_200_OK)
+            else:
+                return Response({"code": ["Invalid code."]}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Both code and new_password are required to reset password.'}, status=status.HTTP_400_BAD_REQUEST)

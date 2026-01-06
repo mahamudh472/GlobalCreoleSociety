@@ -133,3 +133,8 @@ class AddPhoneNumberSerializer(serializers.Serializer):
     phone_number = serializers.CharField(write_only=True, required=True)
     password = serializers.CharField(write_only=True, required=True)
     code = serializers.CharField(write_only=True, required=False)
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(write_only=True, required=True)
+    code = serializers.CharField(write_only=True, required=False)
+    new_password = serializers.CharField(write_only=True, required=False)

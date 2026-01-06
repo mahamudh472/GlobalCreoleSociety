@@ -23,6 +23,7 @@
 | POST | `/accounts/add-email/` | Add extra email | Yes |
 | POST | `/accounts/add-phone-number/` | Add extra phone | Yes |
 | POST | `/accounts/profile-lock/` | Lock/unlock profile | Yes |
+| POST | `/accounts/reset-password/` | Reset password using OTP | No |
 
 ---
 

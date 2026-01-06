@@ -7,7 +7,7 @@ from accounts.views import (
     UserSearchView,
     LocationListCreateView, LocationDetailView,
     WorkListCreateView, WorkDetailView,
-    EducationListCreateView, EducationDetailView
+    EducationListCreateView, EducationDetailView, ResetPasswordView
 )
 
 
@@ -20,6 +20,7 @@ urlpatterns = [
     path('token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('send-otp/', SendOTPView.as_view(), name='send_otp'),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),
+    path('reset-password/', ResetPasswordView.as_view(), name='reset_password'),
     path('change-email/', ChangeEmailView.as_view(), name='change_email'),
     path('change-phone-number/', ChangePhoneNumberView.as_view(), name='change_phone_number'),
     path('add-email/', AddEmailView.as_view(), name='add_email'),
