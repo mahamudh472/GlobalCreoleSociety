@@ -40,7 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(_("email address"), unique=True)
-    profile_name = models.CharField(_("profile name"), max_length=150, unique=True)
+    profile_name = models.CharField(_("profile name"), max_length=150)
 
     description = models.TextField(_("description"), blank=True)
     profile_image = models.ImageField(_("profile image"), upload_to="profile_images/", blank=True, null=True)
