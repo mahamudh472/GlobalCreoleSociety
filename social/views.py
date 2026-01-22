@@ -156,13 +156,32 @@ class FriendListView(generics.ListAPIView):
     serializer_class = FriendshipSerializer
     
     def get_queryset(self):
-        user = self.request.user
+        # Support fetching friends for a specific user via query parameter
+        user_id = self.request.query_params.get('user')
+        if user_id:
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Friendship.objects.none()
+        else:
+            user = self.request.user
+        
         query = self.request.query_params.get('search', '')
-        return Friendship.objects.filter(
-            Q(requester=user, status='accepted') |
-            Q(receiver=user, status='accepted') &
-            Q(requester__profile_name__icontains=query) 
+        
+        # Get friendships where the user is either requester or receiver and status is accepted
+        queryset = Friendship.objects.filter(
+            (Q(requester=user) | Q(receiver=user)),
+            status='accepted'
         ).select_related('requester', 'receiver')
+        
+        # Apply search filter if provided
+        if query:
+            queryset = queryset.filter(
+                Q(requester__profile_name__icontains=query) |
+                Q(receiver__profile_name__icontains=query)
+            )
+        
+        return queryset
 
 
 class UnfriendView(APIView):
